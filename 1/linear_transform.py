@@ -3,6 +3,8 @@ import pandas, numpy
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 
+script_version = "v.0.0.1"
+
 if __name__ == "__main__":
 
     path = "/Users/dmitrav/ETH/courses/iml-tasks/1/data/train_1b.csv"
