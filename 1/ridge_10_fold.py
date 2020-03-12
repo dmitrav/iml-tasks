@@ -1,9 +1,11 @@
 
 import pandas, numpy
 from sklearn.model_selection import KFold, cross_val_score
+from sklearn.metrics import make_scorer, mean_squared_error
+
 from sklearn.linear_model import Ridge
 
-script_version = "v.0.0.2"
+script_version = "v.0.0.3"
 
 if __name__ == "__main__":
 
@@ -15,15 +17,15 @@ if __name__ == "__main__":
     y = data.iloc[:,1]
     X = data.iloc[:,2:]
 
-    kf = KFold(n_splits=10)
+    cv = KFold(n_splits=10, shuffle=True, random_state=42)
 
     rmse = []
 
     for alpha in [0.01, 0.1, 1, 10, 100]:
 
         model = Ridge(alpha=alpha)
-        cv = KFold(n_splits=10, random_state=42)
-        score = numpy.mean(cross_val_score(model, X, y, cv=10))
+
+        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
 
         print("alpha: ", alpha, ", score: ", score, sep="")
 
