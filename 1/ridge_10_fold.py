@@ -5,7 +5,7 @@ from sklearn.metrics import make_scorer, mean_squared_error
 
 from sklearn.linear_model import Ridge
 
-script_version = "v.0.0.3"
+script_version = "v3"
 
 if __name__ == "__main__":
 

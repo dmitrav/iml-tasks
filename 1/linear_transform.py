@@ -1,55 +1,72 @@
 
 import pandas, numpy
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
+from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
 
-script_version = "v.0.0.1"
+script_version = "v6"
 
 if __name__ == "__main__":
 
-    path = "/Users/dmitrav/ETH/courses/iml-tasks/1/data/train_1b.csv"
+    path = "/Users/andreidm/ETH/courses/iml-tasks/1/data/train_1b.csv"
 
     with open(path) as file:
         data = pandas.read_csv(file)
 
     y = data.iloc[:,1].values
+
     X_linear = data.iloc[:,2:].values
     X_quadratic = numpy.power(X_linear, 2)
     X_exponential = numpy.exp(X_linear)
     X_cosine = numpy.cos(X_linear)
-    X_constant = numpy.full(X_linear.shape, 1)
+    X_constant = numpy.full((700, 1), 1)
 
-    model = LinearRegression()
+    X = numpy.hstack([X_linear, X_quadratic, X_exponential, X_cosine, X_constant])
 
-    coefs = []
+    cv = KFold(n_splits=10, shuffle=True, random_state=42)
 
-    model.fit(X_linear, y)
-    coefs.extend(model.coef_)
-    print("linear r2:", model.score(X_linear, y))
+    results = []
+    scores = []
+
+    model = LinearRegression().fit(X, y)
+    score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+
+    scores.append(score)
+    results.append({"model": "linear", "alpha": "-", "rmse": score, "coefs": model.coef_})
+    print("linear score:", score)
     print("coefs:", model.coef_, "\n")
 
-    model.fit(X_quadratic, y)
-    coefs.extend(model.coef_)
-    print("quadratic r2:", model.score(X_quadratic, y))
-    print("coefs:", model.coef_, "\n")
+    for alpha in [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]:
 
-    model.fit(X_exponential, y)
-    coefs.extend(model.coef_)
-    print("exponential r2:", model.score(X_exponential, y))
-    print("coefs:", model.coef_, "\n")
+        model = Lasso(alpha=alpha).fit(X, y)
+        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
 
-    model.fit(X_cosine, y)
-    coefs.extend(model.coef_)
-    print("cosine r2:", model.score(X_cosine, y))
-    print("coefs:", model.coef_, "\n")
+        scores.append(score)
+        results.append({"model": "lasso", "alpha": alpha, "rmse": score, "coefs": model.coef_})
+        print("lasso alpha:", alpha, "score:", score)
+        print("coefs:", model.coef_, "\n")
 
-    model.fit(X_constant, y)
-    coefs.append(0.)
-    print("constant r2:", model.score(X_constant, y))
-    print("coefs:", model.coef_)
+        model = Ridge(alpha=alpha).fit(X, y)
+        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
 
-    output = "\n".join([str(coef) for coef in coefs])
+        scores.append(score)
+        results.append({"model": "ridge", "alpha": alpha, "rmse": score, "coefs": model.coef_})
+        print("ridge alpha:", alpha, "score:", score)
+        print("coefs:", model.coef_, "\n")
 
-    with open(path.replace("data/train_1b", "res/submission_1b"), 'w') as file:
+        model = ElasticNet(alpha=alpha).fit(X, y)
+        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+
+        scores.append(score)
+        results.append({"model": "elastic", "alpha": alpha, "rmse": score, "coefs": model.coef_})
+        print("elastic alpha:", alpha, "score:", score)
+        print("coefs:", model.coef_, "\n")
+
+    print("min score:", min(scores))
+    best_model_index = scores.index(min(scores))
+
+    output = "\n".join([str(coef) for coef in results[best_model_index]["coefs"]])
+
+    with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
         file.write(output)
 
