@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
 import seaborn
 
-script_version = "v7"
+script_version = "v8"
 
 if __name__ == "__main__":
 
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     X = numpy.hstack([X_linear, X_quadratic, X_exponential, X_cosine, X_constant])
 
-    cv = KFold(n_splits=5, shuffle=True, random_state=42)
+    cv = KFold(n_splits=4, shuffle=True, random_state=42)
 
     results = []
     scores = []
