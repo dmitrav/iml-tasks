@@ -3,8 +3,9 @@ import pandas, numpy
 from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
+import seaborn
 
-script_version = "v6"
+script_version = "v7"
 
 if __name__ == "__main__":
 
@@ -14,16 +15,37 @@ if __name__ == "__main__":
         data = pandas.read_csv(file)
 
     y = data.iloc[:,1].values
-
     X_linear = data.iloc[:,2:].values
+
+    # filtering the data
+    for i in range(X_linear.shape[1]):
+
+        q1 = numpy.quantile(X_linear[:,i], 0.25)
+        q3 = numpy.quantile(X_linear[:,i], 0.75)
+        iqr = q3 - q1
+
+        filter = (X_linear[:,i] >= q1 - 1.5 * iqr) * (X_linear[:,i] <= q3 + 1.5 * iqr)
+
+        X_linear = X_linear[filter, :]
+        y = y[filter]
+
+    # # visualising the data
+    # df = pandas.DataFrame(X_linear)
+    # df.columns = ["x1", "x2", "x3", "x4", "x5"]
+    #
+    # df = df.melt(var_name='vars', value_name='vals')
+    #
+    # ax = seaborn.boxplot(x="vars", y="vals", data=df)
+    # plt.show()
+
     X_quadratic = numpy.power(X_linear, 2)
     X_exponential = numpy.exp(X_linear)
     X_cosine = numpy.cos(X_linear)
-    X_constant = numpy.full((700, 1), 1)
+    X_constant = numpy.full((X_linear.shape[0], 1), 1)
 
     X = numpy.hstack([X_linear, X_quadratic, X_exponential, X_cosine, X_constant])
 
-    cv = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
     results = []
     scores = []
