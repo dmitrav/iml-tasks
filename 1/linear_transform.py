@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
 import seaborn
 
-script_version = "v9"
+script_version = "v10"
 
 if __name__ == "__main__":
 
@@ -17,17 +17,17 @@ if __name__ == "__main__":
     y = data.iloc[:,1].values
     X_linear = data.iloc[:,2:].values
 
-    # filtering the data
-    for i in range(X_linear.shape[1]):
-
-        q1 = numpy.quantile(X_linear[:,i], 0.25)
-        q3 = numpy.quantile(X_linear[:,i], 0.75)
-        iqr = q3 - q1
-
-        filter = (X_linear[:,i] >= q1 - 1.5 * iqr) * (X_linear[:,i] <= q3 + 1.5 * iqr)
-
-        X_linear = X_linear[filter, :]
-        y = y[filter]
+    # # filtering the data
+    # for i in range(X_linear.shape[1]):
+    #
+    #     q1 = numpy.quantile(X_linear[:,i], 0.25)
+    #     q3 = numpy.quantile(X_linear[:,i], 0.75)
+    #     iqr = q3 - q1
+    #
+    #     filter = (X_linear[:,i] >= q1 - 1.5 * iqr) * (X_linear[:,i] <= q3 + 1.5 * iqr)
+    #
+    #     X_linear = X_linear[filter, :]
+    #     y = y[filter]
 
     # # visualising the data
     # df = pandas.DataFrame(X_linear)
@@ -93,8 +93,8 @@ if __name__ == "__main__":
     print("min score:", min(scores))
     best_model_index = scores.index(min(scores))
 
-    # output = "\n".join([str(coef) for coef in results[best_model_index]["coefs"]])
-    #
-    # with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
-    #     file.write(output)
+    output = "\n".join([str(coef) for coef in results[best_model_index]["coefs"]])
+
+    with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
+        file.write(output)
 
