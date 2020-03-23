@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
 import seaborn
 
-script_version = "v10"
+script_version = "v11"
 
 if __name__ == "__main__":
 
@@ -17,17 +17,17 @@ if __name__ == "__main__":
     y = data.iloc[:,1].values
     X_linear = data.iloc[:,2:].values
 
-    # # filtering the data
-    # for i in range(X_linear.shape[1]):
-    #
-    #     q1 = numpy.quantile(X_linear[:,i], 0.25)
-    #     q3 = numpy.quantile(X_linear[:,i], 0.75)
-    #     iqr = q3 - q1
-    #
-    #     filter = (X_linear[:,i] >= q1 - 1.5 * iqr) * (X_linear[:,i] <= q3 + 1.5 * iqr)
-    #
-    #     X_linear = X_linear[filter, :]
-    #     y = y[filter]
+    # filtering the data
+    for i in range(X_linear.shape[1]):
+
+        q1 = numpy.quantile(X_linear[:,i], 0.25)
+        q3 = numpy.quantile(X_linear[:,i], 0.75)
+        iqr = q3 - q1
+
+        filter = (X_linear[:,i] >= q1 - 1.5 * iqr) * (X_linear[:,i] <= q3 + 1.5 * iqr)
+
+        X_linear = X_linear[filter, :]
+        y = y[filter]
 
     # # visualising the data
     # df = pandas.DataFrame(X_linear)
@@ -45,8 +45,8 @@ if __name__ == "__main__":
 
     X = numpy.hstack([X_linear, X_quadratic, X_exponential, X_cosine, X_constant])
 
-    folds = [4, 5, 6, 7, 8, 9, 10]
-    alphas = [1e-6, 1e-5, 1e-4, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
+    folds = [4, 5, 6, 7]
+    alphas = [1e-6, 1e-5, 1e-4, 1e-4, 1e-3, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
     # alphas = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]  # v.8
 
     results = []
