@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
 import seaborn
 
-script_version = "v8"
+script_version = "v9"
 
 if __name__ == "__main__":
 
@@ -45,50 +45,56 @@ if __name__ == "__main__":
 
     X = numpy.hstack([X_linear, X_quadratic, X_exponential, X_cosine, X_constant])
 
-    cv = KFold(n_splits=4, shuffle=True, random_state=42)
+    folds = [4, 5, 6, 7, 8, 9, 10]
+    alphas = [1e-6, 1e-5, 1e-4, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
+    # alphas = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]  # v.8
 
     results = []
     scores = []
 
-    model = LinearRegression().fit(X, y)
-    score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+    for fold in folds:
 
-    scores.append(score)
-    results.append({"model": "linear", "alpha": "-", "rmse": score, "coefs": model.coef_})
-    print("linear score:", score)
-    print("coefs:", model.coef_, "\n")
+        cv = KFold(n_splits=fold, shuffle=True, random_state=42)
 
-    for alpha in [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]:
-
-        model = Lasso(alpha=alpha).fit(X, y)
+        model = LinearRegression().fit(X, y)
         score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
 
         scores.append(score)
-        results.append({"model": "lasso", "alpha": alpha, "rmse": score, "coefs": model.coef_})
-        print("lasso alpha:", alpha, "score:", score)
+        results.append({"model": "linear", "fold": fold, "alpha": "-", "rmse": score, "coefs": model.coef_})
+        print("linear score:", score)
         print("coefs:", model.coef_, "\n")
 
-        model = Ridge(alpha=alpha).fit(X, y)
-        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+        for alpha in alphas:
 
-        scores.append(score)
-        results.append({"model": "ridge", "alpha": alpha, "rmse": score, "coefs": model.coef_})
-        print("ridge alpha:", alpha, "score:", score)
-        print("coefs:", model.coef_, "\n")
+            model = Lasso(alpha=alpha).fit(X, y)
+            score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
 
-        model = ElasticNet(alpha=alpha).fit(X, y)
-        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+            scores.append(score)
+            results.append({"model": "lasso", "fold": fold, "alpha": alpha, "rmse": score, "coefs": model.coef_})
+            print("lasso alpha:", alpha, "fold:", fold, "score:", score)
+            print("coefs:", model.coef_, "\n")
 
-        scores.append(score)
-        results.append({"model": "elastic", "alpha": alpha, "rmse": score, "coefs": model.coef_})
-        print("elastic alpha:", alpha, "score:", score)
-        print("coefs:", model.coef_, "\n")
+            model = Ridge(alpha=alpha).fit(X, y)
+            score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+
+            scores.append(score)
+            results.append({"model": "ridge", "fold": fold, "alpha": alpha, "rmse": score, "coefs": model.coef_})
+            print("ridge alpha:", alpha, "fold:", fold, "score:", score)
+            print("coefs:", model.coef_, "\n")
+
+            model = ElasticNet(alpha=alpha).fit(X, y)
+            score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+
+            scores.append(score)
+            results.append({"model": "elastic", "fold": fold, "alpha": alpha, "rmse": score, "coefs": model.coef_})
+            print("elastic alpha:", alpha, "fold:", fold, "score:", score)
+            print("coefs:", model.coef_, "\n")
 
     print("min score:", min(scores))
     best_model_index = scores.index(min(scores))
 
-    output = "\n".join([str(coef) for coef in results[best_model_index]["coefs"]])
-
-    with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
-        file.write(output)
+    # output = "\n".join([str(coef) for coef in results[best_model_index]["coefs"]])
+    #
+    # with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
+    #     file.write(output)
 
