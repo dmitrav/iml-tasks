@@ -109,6 +109,6 @@ if __name__ == "__main__":
 
     output = "\n".join([str(coef) for coef in results[best_model_index]["coefs"]])
 
-    with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
-        file.write(output)
+    # with open(path.replace("data/train_1b", "res/submission_1b_"+script_version), 'w') as file:
+    #     file.write(output)
 
