@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     for fold in folds:
 
-        cv = KFold(n_splits=fold, shuffle=True, random_state=42)
+        cv = KFold(n_splits=fold, shuffle=True, random_state=228)
 
         model = LinearRegression().fit(X, y)
         # score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))  # v.1-12
