@@ -5,7 +5,7 @@ from sklearn.metrics import make_scorer, mean_squared_error
 
 from sklearn.linear_model import Ridge, RidgeCV
 
-script_version = "v5"
+script_version = "v6"
 
 if __name__ == "__main__":
 
@@ -23,13 +23,13 @@ if __name__ == "__main__":
 
     for alpha in [0.01, 0.1, 1, 10, 100]:
 
-        # model = Ridge(alpha=alpha, fit_intercept=False)
-        model = Ridge(alpha=alpha)
+        model = Ridge(alpha=alpha, fit_intercept=False)
+        # model = Ridge(alpha=alpha)
 
         model.fit(X, y)
 
-        # score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
-        score = numpy.sqrt(mean_squared_error(y, model.predict(X)))
+        score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+        # score = numpy.sqrt(mean_squared_error(y, model.predict(X)))
 
         print("alpha: ", alpha, ", score: ", score, sep="")
 
