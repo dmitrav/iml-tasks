@@ -21,19 +21,22 @@ if __name__ == "__main__":
 
     rmse = []
 
-    for alpha in [0.01, 0.1, 1, 10, 100]:
+    # for alpha in [0.01, 0.1, 1, 10, 100]:
+    #
+    #     model = Ridge(alpha=alpha, fit_intercept=False)
+    #     # model = Ridge(alpha=alpha)
+    #
+    #     model.fit(X, y)
+    #
+    #     # score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
+    #     score = numpy.sqrt(mean_squared_error(y, model.predict(X)))
+    #
+    #     print("alpha: ", alpha, ", score: ", score, sep="")
+    #
+    #     rmse.append(score)
 
-        model = Ridge(alpha=alpha, fit_intercept=False)
-        # model = Ridge(alpha=alpha)
+    model = RidgeCV(alphas=[0.01, 0.1, 1, 10, 100], fit_intercept=False, cv=10)
 
-        model.fit(X, y)
-
-        # score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))
-        score = numpy.sqrt(mean_squared_error(y, model.predict(X)))
-
-        print("alpha: ", alpha, ", score: ", score, sep="")
-
-        rmse.append(score)
 
     output = "\n".join([str(score) for score in rmse])
 
