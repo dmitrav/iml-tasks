@@ -65,4 +65,5 @@ if __name__ == "__main__":
     full_data = pandas.read_csv(train_path)
     labels = pandas.read_csv(train_labels_path)
 
-    print()
+    pandas.set_option('display.max_columns', 50)
+    print(full_data.iloc[:, 3:].describe())
