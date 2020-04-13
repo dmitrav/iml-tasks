@@ -9,6 +9,7 @@ TESTS = ['LABEL_BaseExcess', 'LABEL_Fibrinogen', 'LABEL_AST', 'LABEL_Alkalinepho
 
 
 def get_score(df_true, df_submission):
+
     df_submission = df_submission.sort_values('pid')
     df_true = df_true.sort_values('pid')
     task1 = np.mean([metrics.roc_auc_score(df_true[entry], df_submission[entry]) for entry in TESTS])

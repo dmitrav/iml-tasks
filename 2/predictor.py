@@ -1,10 +1,12 @@
 
 import pandas, numpy
+import preprocessing
 from constants import train_path, train_labels_path, test_path
+from constants import subtask_1_labels
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler, PowerTransformer, QuantileTransformer, Normalizer
-from preprocessing import impute_missing_values_with_number, impute_missing_values_iteratively
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import SimpleImputer, IterativeImputer
+from sklearn.model_selection import KFold
 from sklearn.svm import SVC
 
 
@@ -48,47 +50,52 @@ if __name__ == "__main__":
 
         imputed_data = [
             *simply_imputed_data,
-            IterativeImputer(initial_strategy="mean", random_seed=random_seeds[r]),
-            IterativeImputer(initial_strategy="median", random_seed=random_seeds[r]),
-            IterativeImputer(initial_strategy="constant", random_seed=random_seeds[r]),
-            IterativeImputer(initial_strategy="most_frequent", random_seed=random_seeds[r])
+            IterativeImputer(initial_strategy="mean", random_state=random_seeds[r]),
+            IterativeImputer(initial_strategy="median", random_state=random_seeds[r]),
+            IterativeImputer(initial_strategy="constant", random_state=random_seeds[r]),
+            IterativeImputer(initial_strategy="most_frequent", random_state=random_seeds[r])
         ]
 
-        for n in range(5, 20):
+        for i in range(len(imputed_data)):
 
-            cv = KFold(n_splits=n, shuffle=True, random_state=random_seeds[r])
+            scaled_data = [
+                imputed_data[i],
+                StandardScaler().fit_transform(imputed_data[i]),
+                MinMaxScaler().fit_transform(imputed_data[i]),
+                MaxAbsScaler().fit_transform(imputed_data[i]),
+                RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data[i]),
+                PowerTransformer(method='yeo-johnson').fit_transform(imputed_data[i]),
+                QuantileTransformer(output_distribution='normal').fit_transform(imputed_data[i]),
+                QuantileTransformer(output_distribution='uniform').fit_transform(imputed_data[i]),
+                Normalizer().fit_transform(imputed_data[i])
+            ]
 
-            for i in range(len(imputed_data)):
+            for s in range(len(scaled_data)):
 
-                scaled_data = [
-                    data,
-                    StandardScaler().fit_transform(imputed_data[i]),
-                    MinMaxScaler().fit_transform(imputed_data[i]),
-                    MaxAbsScaler().fit_transform(imputed_data[i]),
-                    RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data[i]),
-                    PowerTransformer(method='yeo-johnson').fit_transform(imputed_data[i]),
-                    QuantileTransformer(output_distribution='normal').fit_transform(imputed_data[i]),
-                    QuantileTransformer(output_distribution='uniform').fit_transform(imputed_data[i]),
-                    Normalizer().fit_transform(imputed_data[i])
-                ]
+                for n in range(5, 20):
+                    cv = KFold(n_splits=n, shuffle=True, random_state=random_seeds[r])
 
-                for s in range(len(scaled_data)):
+                    X = preprocessing.get_engineered_features(scaled_data[i])  # slow
 
-                    # TODO: response variable y is missing:
-                    #  what shape should it have?
+                    # TODO: create a convenient data structure to collect results
 
-                    # results = []
-                    # names = []
-                    #
-                    # for name, model in svm_models:
-                    #
-                    #     result = cross_val_score(model, X, train_data["Survived"], cv=cv)
-                    #     names.append(name)
-                    #     results.append(result)
+                    results = []
+                    names = []
+
+                    # iterate over models
+                    for name, model in svm_models:
+                        # iterate over labels to predict
+                        for label in subtask_1_labels:
+
+                            # TODO: incorporate softmax
+                            result = cross_val_score(model, X, labels.loc[label], cv=cv)
+
+                            names.append(name)
+                            results.append(result)
 
 
 
-                    pass
+                pass
 
 
 
