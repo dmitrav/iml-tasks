@@ -120,7 +120,7 @@ if __name__ == "__main__":
     features_subset = features[indices, :]
     labels = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
 
-    random_seeds = [42, 666, 321]
+    random_seeds = [42]
 
     results = {"svm_models": []}
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
             for r in range(len(random_seeds)):
 
-                print("with random seed:", r)
+                print("with random seed:", random_seeds[r])
 
                 svm_models = create_svm_models([10 ** x for x in range(-5, 6)], random_seeds[r])
                 cv = KFold(n_splits=n_folds, shuffle=True, random_state=random_seeds[r])
@@ -165,10 +165,10 @@ if __name__ == "__main__":
                     # iterate over labels to predict
                     for label in subtask_1_labels:
                         y = labels.loc[:, label]
-                        mean_accuracy = cross_val_score(model, X, y, cv=cv)
+                        f1_score = cross_val_score(model, X, y, cv=cv, scoring='f1')
 
                         result["labels"].append(label)
-                        result["scores"].append(mean_accuracy)
+                        result["scores"].append(f1_score)
 
                     results["svm_models"].append(result)
 
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
                 iteration = j * 5 + (n_folds - 5) * len(random_seeds) + r
                 total = len(imputed_scaled_features) * 5 * len(random_seeds)
-                print(iteration / total * 100, "% finished\n")
+                print(round(iteration / total * 100, 2), "% finished\n")
 
     # save main results
     with open("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_svm_impute_simple_mean_" + version + ".json", "w") as file:
