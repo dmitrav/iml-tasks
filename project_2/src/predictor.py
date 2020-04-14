@@ -20,12 +20,14 @@ def create_svm_models(C_range, random_seed):
     return svm_models
 
 
-if __name__ == "__main__":
+def bruteforce():
+    """ This method was meant to iterate over multiple fitting strategies.
+        Turned out ot be infeasible timewise... """
 
     full_data = pandas.read_csv(train_path)
     labels = pandas.read_csv(train_labels_path)
 
-    data_with_nans = full_data.iloc[:,3:]
+    data_with_nans = full_data.iloc[:, 3:]
 
     random_seeds = [42, 111, 666, 121, 321, 7, 26, 33, 222, 842]
 
@@ -83,7 +85,6 @@ if __name__ == "__main__":
 
                         # iterate over labels to predict
                         for label in subtask_1_labels:
-
                             y = labels.loc[:, label]
                             mean_accuracy = cross_val_score(model, X, y, cv=cv)
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
                     timepoint_2 = time.time()
                     print("results appended,", timepoint_2 - timepoint_1, "s elapsed\n")
 
-                    iteration = i * len(imputed_scaled_features) + j * 15 + (n_folds-5) * len(random_seeds) + r
+                    iteration = i * len(imputed_scaled_features) + j * 15 + (n_folds - 5) * len(random_seeds) + r
                     total = len(imputed_features) * len(imputed_scaled_features) * 15 * len(random_seeds)
                     print(iteration / total, "% finished")
 
@@ -104,5 +105,84 @@ if __name__ == "__main__":
         json.dump(results, file)
 
 
+if __name__ == "__main__":
 
-    pass
+    full_data = pandas.read_csv(train_path)
+    labels = pandas.read_csv(train_labels_path)
+
+    data_with_nans = full_data.iloc[:, 3:]
+
+    random_seeds = [42, 111, 666, 121, 321, 7, 26, 33, 222, 842]
+
+    warnings.filterwarnings("ignore")
+
+    start_time = time.time()
+
+    features = preprocessing.get_engineered_features(numpy.array(data_with_nans))  # slow
+    timepoint_1 = time.time()
+    print(timepoint_1 - start_time, "s for feature engineering")
+
+    imputed_features = preprocessing.impute_data_with_strategies(features)
+    timepoint_2 = time.time()
+    print(timepoint_2 - timepoint_1, "s for imputation\n")
+
+    results = {"svm_models": []}
+
+    for i in range(len(imputed_features)):
+
+        timepoint_1 = time.time()
+        print("working with:", imputed_features[i][0])
+
+        # scaling takes < 5 seconds
+        imputed_scaled_features = preprocessing.scale_data_with_methods(imputed_features[i][1])
+
+        for j in range(len(imputed_scaled_features)):
+
+            print("scaled by:", imputed_scaled_features[j][0], "\n")
+
+            X = imputed_scaled_features[j][1]
+
+            for n_folds in range(5, 21):
+                for r in range(len(random_seeds)):
+
+                    svm_models = create_svm_models([10 ** x for x in range(-6, 7)], random_seeds[r])
+                    cv = KFold(n_splits=n_folds, shuffle=True, random_state=random_seeds[r])
+
+                    timepoint_1 = time.time()
+                    print("models' evaluation started...")
+
+                    # iterate over models
+                    for model_name, model in svm_models:
+
+                        result = {
+                            "labels": [],
+                            "scores": [],
+                            "model": model_name,
+                            "kfold": n_folds,
+                            "random_seed": random_seeds[r],
+                            "scaling": imputed_scaled_features[j][0],
+                            "imputation": imputed_features[i][0],
+                            "engineering": "median, min, max, var, unique",
+                            "version": version
+                        }
+
+                        # iterate over labels to predict
+                        for label in subtask_1_labels:
+                            y = labels.loc[:, label]
+                            mean_accuracy = cross_val_score(model, X, y, cv=cv)
+
+                            result["labels"].append(label)
+                            result["scores"].append(mean_accuracy)
+
+                        results["svm_models"].append(result)
+
+                    timepoint_2 = time.time()
+                    print("results appended,", timepoint_2 - timepoint_1, "s elapsed\n")
+
+                    iteration = i * len(imputed_scaled_features) + j * 15 + (n_folds - 5) * len(random_seeds) + r
+                    total = len(imputed_features) * len(imputed_scaled_features) * 15 * len(random_seeds)
+                    print(iteration / total, "% finished")
+
+    # save main results
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/svm_results_" + version + ".json", "w") as file:
+        json.dump(results, file)

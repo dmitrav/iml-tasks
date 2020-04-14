@@ -2,6 +2,7 @@ import numpy, pandas
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler, PowerTransformer, QuantileTransformer, Normalizer
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import SimpleImputer, IterativeImputer
+from project_2.src.constants import train_path, test_path, train_labels_path, version
 
 
 def scale_data_with_methods(imputed_data):
@@ -78,4 +79,33 @@ def get_engineered_features(dataset):
     return numpy.array(flattened)
 
 
+def engineer_and_save_features():
+    """ Obvious. """
+
+    full_data = pandas.read_csv(train_path)
+
+    data_with_nans = full_data.iloc[:, 3:]
+
+    features = get_engineered_features(numpy.array(data_with_nans))
+
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+    pandas.DataFrame(features).to_csv(path + "engineered_features_" + version + ".csv")
+
+
+def impute_features_with_strategies_and_save(path):
+    """ Impute features and save datasets. """
+
+    features = pandas.read_csv(path)
+
+    imputed_features = impute_data_with_strategies(numpy.array(features))
+
+    save_to_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+
+    for name, data in imputed_features:
+        pandas.DataFrame(data).to_csv(save_to_path + name + "_" + version + ".csv")
+
+
+if __name__ == "__main__":
+
     pass
+

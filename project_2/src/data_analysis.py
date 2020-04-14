@@ -1,7 +1,7 @@
 
 import pandas, numpy, time
-from constants import train_path, test_path, train_labels_path
-from constants import subtask_1_labels
+from project_2.src.constants import train_path, test_path, train_labels_path
+from project_2.src.constants import subtask_1_labels
 from matplotlib import pyplot
 
 
