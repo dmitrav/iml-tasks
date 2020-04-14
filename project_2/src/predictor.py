@@ -1,9 +1,11 @@
 
-import pandas, numpy, time
+import pandas, numpy, time, json, warnings
 from project_2.src import preprocessing
-from constants import train_path, train_labels_path
-from constants import subtask_1_labels
+from project_2.src.constants import train_path, train_labels_path
+from project_2.src.constants import subtask_1_labels
+from project_2.src.constants import version
 from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVC
 
 
@@ -12,7 +14,7 @@ def create_svm_models(C_range, random_seed):
 
     svm_models = []
     for C in C_range:
-        model = ("svm_sigmoid_" + str(C), SVC(C=C, kernel="sigmoid", random_state=random_seed))
+        model = ("svm_sigmoid_" + str(C), SVC(C=C, kernel="sigmoid", random_state=random_seed, probability=True))
         svm_models.append(model)
 
     return svm_models
@@ -27,6 +29,8 @@ if __name__ == "__main__":
 
     random_seeds = [42, 111, 666, 121, 321, 7, 26, 33, 222, 842]
 
+    warnings.filterwarnings("ignore")
+
     start_time = time.time()
 
     features = preprocessing.get_engineered_features(numpy.array(data_with_nans))  # slow
@@ -37,45 +41,68 @@ if __name__ == "__main__":
     timepoint_2 = time.time()
     print(timepoint_2 - timepoint_1, "s for imputation\n")
 
+    results = {"svm_models": []}
+
     for i in range(len(imputed_features)):
 
         timepoint_1 = time.time()
         print("working with:", imputed_features[i][0])
 
+        # scaling takes < 5 seconds
         imputed_scaled_features = preprocessing.scale_data_with_methods(imputed_features[i][1])
-        timepoint_2 = time.time()
-        print(timepoint_2 - timepoint_1, "s for scaling\n")
 
         for j in range(len(imputed_scaled_features)):
-            for n_folds in range(5, 20):
+
+            print("scaled by:", imputed_scaled_features[j][0], "\n")
+
+            X = imputed_scaled_features[j][1]
+
+            for n_folds in range(5, 21):
                 for r in range(len(random_seeds)):
 
                     svm_models = create_svm_models([10 ** x for x in range(-6, 7)], random_seeds[r])
                     cv = KFold(n_splits=n_folds, shuffle=True, random_state=random_seeds[r])
 
-                    # TODO: create a convenient data structure to collect results
-
-                    results = []
-                    names = []
+                    timepoint_1 = time.time()
+                    print("models' evaluation started...")
 
                     # iterate over models
-                    for name, model in svm_models:
+                    for model_name, model in svm_models:
+
+                        result = {
+                            "labels": [],
+                            "scores": [],
+                            "model": model_name,
+                            "kfold": n_folds,
+                            "random_seed": random_seeds[r],
+                            "scaling": imputed_scaled_features[j][0],
+                            "imputation": imputed_features[i][0],
+                            "engineering": "median, min, max, var, unique",
+                            "version": version
+                        }
+
                         # iterate over labels to predict
                         for label in subtask_1_labels:
 
-                            # TODO: figure out how sigmoid results will be compared to binary labels
-                            result = cross_val_score(model, X, labels.loc[label], cv=cv)
+                            y = labels.loc[:, label]
+                            mean_accuracy = cross_val_score(model, X, y, cv=cv)
 
-                            names.append(name)
-                            results.append(result)
+                            result["labels"].append(label)
+                            result["scores"].append(mean_accuracy)
 
+                        results["svm_models"].append(result)
 
+                    timepoint_2 = time.time()
+                    print("results appended,", timepoint_2 - timepoint_1, "s elapsed\n")
 
-            pass
+                    iteration = i * len(imputed_scaled_features) + j * 15 + (n_folds-5) * len(random_seeds) + r
+                    total = len(imputed_features) * len(imputed_scaled_features) * 15 * len(random_seeds)
+                    print(iteration / total, "% finished")
 
+    # save main results
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/svm_results_" + version + ".json", "w") as file:
+        json.dump(results, file)
 
-
-            print()
 
 
     pass
