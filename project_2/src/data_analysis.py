@@ -49,7 +49,7 @@ def inspect_nan_values():
     x = [0]
     y = [full_data.shape[0]]
     for i in range(full_data.shape[1]):
-        data = full_data.dropna(thresh=i + 1)  # drop row if it has < i+1 finite values
+        data = full_data.dropna(thresh=i + 1)  # drop row if it has < i+project_1 finite values
         x.append(i + 1)
         y.append(data.shape[0])
 

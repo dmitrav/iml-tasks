@@ -7,7 +7,7 @@ def polynomial_data(num_points, noise, w):
     x = np.random.normal(size=(num_points, 1))
     x1 = np.power(x, 0)
     for d in range(dim):
-        x1 = np.concatenate((np.power(x, 1 + d), x1), axis=1)  # X = [x, 1].
+        x1 = np.concatenate((np.power(x, 1 + d), x1), axis=1)  # X = [x, project_1].
     y = np.dot(x1, w) + np.random.normal(size=(num_points,)) * noise  # y = Xw + eps
 
     return x1, y
@@ -32,7 +32,7 @@ def circular_separable_data(num_positive, num_negative=None, noise=0., offset=1,
     if num_negative is None:
         num_negative = num_positive
     x = np.random.randn(num_positive, dim)
-    x = offset * x / np.linalg.norm(x, axis=1, keepdims=True)  # Normalize datapoints to have norm 1.
+    x = offset * x / np.linalg.norm(x, axis=1, keepdims=True)  # Normalize datapoints to have norm project_1.
     x += np.random.randn(num_positive, 2) * noise;
     y = 1 * np.ones((num_positive,), dtype=np.int)
 

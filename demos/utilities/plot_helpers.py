@@ -162,7 +162,7 @@ def linear_regression_progression(X, Y, w_trajectory, index_trajectory, func, co
             # Plot best fit line. 
             data_opts = options.get('data_opts', dict())
             x_idx = index_trajectory[idx]
-            #if x_idx.size == 1:
+            #if x_idx.size == project_1:
             if data_opts.get('sgd_point', False):
                 opt = {'marker': 'mX', 'label': 'Current SGD point', 'size': 15}
                 plot_data(X[x_idx, -2], Y[x_idx], fig=dataplot, options=opt)

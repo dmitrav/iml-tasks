@@ -11,7 +11,7 @@ script_version = "v14"
 
 if __name__ == "__main__":
 
-    path = "/Users/andreidm/ETH/courses/iml-tasks/1/data/train_1b.csv"
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_1/data/train_1b.csv"
 
     with open(path) as file:
         data = pandas.read_csv(file)
@@ -20,13 +20,13 @@ if __name__ == "__main__":
     X_linear = data.iloc[:,2:].values
 
     # # filtering the data
-    # for i in range(X_linear.shape[1]):
+    # for i in range(X_linear.shape[project_1]):
     #
     #     q1 = numpy.quantile(X_linear[:,i], 0.25)
     #     q3 = numpy.quantile(X_linear[:,i], 0.75)
     #     iqr = q3 - q1
     #
-    #     filter = (X_linear[:,i] >= q1 - 1.5 * iqr) * (X_linear[:,i] <= q3 + 1.5 * iqr)
+    #     filter = (X_linear[:,i] >= q1 - project_1.5 * iqr) * (X_linear[:,i] <= q3 + project_1.5 * iqr)
     #
     #     X_linear = X_linear[filter, :]
     #     y = y[filter]
@@ -47,15 +47,15 @@ if __name__ == "__main__":
 
     X = numpy.hstack([X_linear, X_quadratic, X_exponential, X_cosine, X_constant])
 
-    # corrs = [spearmanr(X[:,i], y)[0] for i in range(X.shape[1])]  # none
+    # corrs = [spearmanr(X[:,i], y)[0] for i in range(X.shape[project_1])]  # none
     # mics = mutual_info_regression(X, y, discrete_features=False, n_neighbors=10, random_state=42)  # none
     # f_scores = f_regression(X, y, center=False)  # questionable
 
     folds = [3, 4, 5]
 
     alphas = numpy.power(10, numpy.linspace(-6, 6, 1000))  # v. 13
-    # alphas = [1e-6, 1e-5, 1e-4, 1e-4, 1e-3, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]  # v.9-12
-    # alphas = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]  # v.8
+    # alphas = [1e-6, 1e-5, 1e-4, 1e-4, 1e-3, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.project_1, 0.11, 0.12, 0.13, 0.14, 0.15, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]  # v.9-12
+    # alphas = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.project_1, 0.11, 0.12, 0.13, 0.14, 0.15]  # v.8
 
     results = []
     scores = []
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         cv = KFold(n_splits=fold, shuffle=True, random_state=228)
 
         model = LinearRegression().fit(X, y)
-        # score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))  # v.1-12
+        # score = numpy.sqrt(-numpy.mean(cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv)))  # v.project_1-12
         score = numpy.sum(-cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=cv))  # v. 14
 
         scores.append(score)

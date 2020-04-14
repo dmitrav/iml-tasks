@@ -9,7 +9,7 @@ script_version = "v7"
 
 if __name__ == "__main__":
 
-    path = "/Users/andreidm/ETH/courses/iml-tasks/1/data/train_1a.csv"
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_1/data/train_1a.csv"
 
     with open(path) as file:
         data = pandas.read_csv(file)
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     rmse = []
 
-    # for alpha in [0.01, 0.1, 1, 10, 100]:
+    # for alpha in [0.01, 0.project_1, project_1, 10, 100]:
     #
     #     model = Ridge(alpha=alpha, fit_intercept=False)
     #     # model = Ridge(alpha=alpha)

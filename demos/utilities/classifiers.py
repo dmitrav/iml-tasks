@@ -66,7 +66,7 @@ class Perceptron(Classifier):
         error[error < 0] = 0.
 
         error_idx = ((self._Ytr[indexes][error > 0] + 1) / 2).astype(
-            np.int)  # (y+1)/2 maps {-1,1} to {0, 1} for indexing
+            np.int)  # (y+project_1)/project_2 maps {-project_1,project_1} to {0, project_1} for indexing
         weighted_error = self._class_cost[error_idx] * error[error > 0]
 
         return np.sum(weighted_error) / indexes.size
@@ -79,7 +79,7 @@ class Perceptron(Classifier):
         gradient[error < 0] = 0
 
         error_idx = ((self._Ytr[indexes][error > 0] + 1) / 2).astype(
-            np.int)  # (y+1)/2 maps {-1,1} to {0, 1} for indexing
+            np.int)  # (y+project_1)/project_2 maps {-project_1,project_1} to {0, project_1} for indexing
         weighted_grad = self._class_cost[error_idx, np.newaxis] * gradient[error > 0]
 
         return np.sum(weighted_grad, axis=0)
@@ -88,7 +88,7 @@ class Perceptron(Classifier):
         error = -np.dot(self._Xtest, w) * self._Ytest
         error[error < 0] = 0.
 
-        error_idx = ((self._Ytest[error > 0] + 1) / 2).astype(np.int)  # (y+1)/2 maps {-1,1} to {0, 1} for indexing
+        error_idx = ((self._Ytest[error > 0] + 1) / 2).astype(np.int)  # (y+project_1)/project_2 maps {-project_1,project_1} to {0, project_1} for indexing
         weighted_error = self._class_cost[error_idx] * error[error > 0]
 
         return np.sum(weighted_error) / self._Ytest.size
@@ -114,7 +114,7 @@ class SVM(Classifier):
         error[error < 0] = 0
 
         error_idx = ((self._Ytr[indexes][error > 0] + 1) / 2).astype(
-            np.int)  # (y+1)/2 maps {-1,1} to {0, 1} for indexing
+            np.int)  # (y+project_1)/project_2 maps {-project_1,project_1} to {0, project_1} for indexing
         weighted_error = self._class_cost[error_idx] * error[error > 0]
 
         return np.sum(weighted_error) / indexes.size
@@ -127,7 +127,7 @@ class SVM(Classifier):
         gradient[error < 0] = 0
 
         error_idx = ((self._Ytr[indexes][error > 0] + 1) / 2).astype(
-            np.int)  # (y+1)/2 maps {-1,1} to {0, 1} for indexing
+            np.int)  # (y+project_1)/project_2 maps {-project_1,project_1} to {0, project_1} for indexing
         weighted_grad = self._class_cost[error_idx, np.newaxis] * gradient[error > 0]
 
         return np.sum(weighted_grad, axis=0)
@@ -137,7 +137,7 @@ class SVM(Classifier):
         error[error < 0] = 0
 
         error_idx = ((self._Ytest[error > 0] + 1) / 2).astype(
-            np.int)  # (y+1)/2 maps {-1,1} to {0, 1} for indexing
+            np.int)  # (y+project_1)/project_2 maps {-project_1,project_1} to {0, project_1} for indexing
         weighted_error = self._class_cost[error_idx] * error[error > 0]
 
         return np.sum(weighted_error) / self._Ytest.size
