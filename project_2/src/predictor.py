@@ -1,10 +1,8 @@
 
-import pandas
+import pandas, numpy, time
 from project_2.src import preprocessing
 from constants import train_path, train_labels_path
 from constants import subtask_1_labels
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler, PowerTransformer, QuantileTransformer, Normalizer
-from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.model_selection import KFold
 from sklearn.svm import SVC
 
@@ -29,19 +27,30 @@ if __name__ == "__main__":
 
     random_seeds = [42, 111, 666, 121, 321, 7, 26, 33, 222, 842]
 
-    imputed_data = preprocessing.impute_data_with_strategies(data_with_nans)
+    start_time = time.time()
 
-    for i in range(len(imputed_data)):
-        scaled_data = preprocessing.scale_data_with_methods(imputed_data[i])
+    features = preprocessing.get_engineered_features(numpy.array(data_with_nans))  # slow
+    timepoint_1 = time.time()
+    print(timepoint_1 - start_time, "s for feature engineering")
 
-        for s in range(len(scaled_data)):
-            X = preprocessing.get_engineered_features(scaled_data[i])  # slow
+    imputed_features = preprocessing.impute_data_with_strategies(features)
+    timepoint_2 = time.time()
+    print(timepoint_2 - timepoint_1, "s for imputation\n")
 
+    for i in range(len(imputed_features)):
+
+        timepoint_1 = time.time()
+        print("working with:", imputed_features[i][0])
+
+        imputed_scaled_features = preprocessing.scale_data_with_methods(imputed_features[i][1])
+        timepoint_2 = time.time()
+        print(timepoint_2 - timepoint_1, "s for scaling\n")
+
+        for j in range(len(imputed_scaled_features)):
             for n_folds in range(5, 20):
                 for r in range(len(random_seeds)):
 
                     svm_models = create_svm_models([10 ** x for x in range(-6, 7)], random_seeds[r])
-
                     cv = KFold(n_splits=n_folds, shuffle=True, random_state=random_seeds[r])
 
                     # TODO: create a convenient data structure to collect results
@@ -54,7 +63,7 @@ if __name__ == "__main__":
                         # iterate over labels to predict
                         for label in subtask_1_labels:
 
-                            # TODO: incorporate softmax
+                            # TODO: figure out how sigmoid results will be compared to binary labels
                             result = cross_val_score(model, X, labels.loc[label], cv=cv)
 
                             names.append(name)
