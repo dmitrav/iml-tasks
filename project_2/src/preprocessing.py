@@ -10,7 +10,7 @@ def scale_data_with_methods(imputed_data):
 
     scaled_data = [
         ("none", imputed_data),
-        ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
+        # ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
         ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data)),
         # ("max_abs_scaler", MaxAbsScaler().fit_transform(imputed_data)),
         ("robust_scaler", RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data)),

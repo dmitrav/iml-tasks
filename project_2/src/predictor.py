@@ -115,12 +115,13 @@ if __name__ == "__main__":
     features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/impute_simple_mean_v.0.0.8.csv"
     features = numpy.array(pandas.read_csv(features_path))
 
-    # take a subset of features to train a model faster (10% of the entire dataset)
-    indices = numpy.random.choice(features.shape[0], features.shape[0] // 10)
+    # take a subset of features to train a model faster (50% of the entire dataset)
+    indices = numpy.random.choice(features.shape[0], features.shape[0] // 3)
     features_subset = features[indices, :]
     labels = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
 
     random_seeds = [42]
+    n_folds = [5]
 
     results = {"svm_models": []}
 
@@ -132,29 +133,31 @@ if __name__ == "__main__":
         print("scaled by:", imputed_scaled_features[j][0], "\n")
 
         X = imputed_scaled_features[j][1]
+        timepoint_1 = time.time()
 
-        for n_folds in range(5, 11):
+        for k in range(len(n_folds)):
 
-            print("using", n_folds, "CV folds")
+            print("using", n_folds[k], "CV folds")
 
             for r in range(len(random_seeds)):
 
                 print("with random seed:", random_seeds[r])
 
                 svm_models = create_svm_models([10 ** x for x in range(-5, 6)], random_seeds[r])
-                cv = KFold(n_splits=n_folds, shuffle=True, random_state=random_seeds[r])
+                cv = KFold(n_splits=n_folds[k], shuffle=True, random_state=random_seeds[r])
 
-                timepoint_1 = time.time()
                 print("models' evaluation started...")
 
                 # iterate over models
-                for model_name, model in svm_models:
+                for m in range(len(svm_models)):
+
+                    # print("\n", model_name, ":\n", sep="")
 
                     result = {
                         "labels": [],
                         "scores": [],
-                        "model": model_name,
-                        "kfold": n_folds,
+                        "model": svm_models[m][0],  # model name
+                        "kfold": n_folds[k],
                         "random_seed": random_seeds[r],
                         "scaling": imputed_scaled_features[j][0],
                         "imputation": "impute_simple_mean",
@@ -165,19 +168,23 @@ if __name__ == "__main__":
                     # iterate over labels to predict
                     for label in subtask_1_labels:
                         y = labels.loc[:, label]
-                        f1_score = cross_val_score(model, X, y, cv=cv, scoring='f1')
+                        f1_score = cross_val_score(svm_models[m][1], X, y, cv=cv, scoring='f1_weighted')
+
+                        print(label, "scored with median f1 =", numpy.median(f1_score))
 
                         result["labels"].append(label)
-                        result["scores"].append(f1_score)
+                        result["scores"].append(f1_score.tolist())
 
+                    print(round((m+1) / len(svm_models) * 100, 2), "% of models scored\n")
                     results["svm_models"].append(result)
 
-                timepoint_2 = time.time()
-                print("results appended,", timepoint_2 - timepoint_1, "s elapsed")
+        timepoint_2 = time.time()
+        print("results appended,", (timepoint_2 - timepoint_1) // 60 + 1, "minutes elapsed")
+        print(round((j+1) / len(imputed_scaled_features) * 100, 2), "% of the total run finished")
 
-                iteration = j * 5 + (n_folds - 5) * len(random_seeds) + r
-                total = len(imputed_scaled_features) * 5 * len(random_seeds)
-                print(round(iteration / total * 100, 2), "% finished\n")
+        # iteration = j * len(nfolds_range) + k * len(random_seeds) + r+1
+        # total = len(imputed_scaled_features) * 5 * len(random_seeds)
+        # print(round(iteration / total * 100, 2), "% finished\n")
 
     # save main results
     with open("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_svm_impute_simple_mean_" + version + ".json", "w") as file:
