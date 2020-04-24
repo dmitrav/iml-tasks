@@ -1,5 +1,5 @@
 
-import pandas, numpy, time, json, warnings
+import pandas, numpy, time, json, warnings, multiprocessing
 from project_2.src import preprocessing
 from project_2.src.constants import train_path, train_labels_path
 from project_2.src.constants import subtask_1_labels
@@ -221,7 +221,7 @@ def run_label_specific_svm(label_name, imputation_name):
         factor = 1
 
     indices = numpy.random.choice(features.shape[0], features.shape[0] // factor)
-    features_subset = features[indices, :]
+    features_subset = features.iloc[indices, :]
     labels_subset = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
 
     scaled_features = preprocessing.scale_data_with_methods(features_subset.iloc[:, 2:])

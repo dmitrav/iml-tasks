@@ -118,6 +118,8 @@ def impute_features_with_strategies_and_save(path):
 
     if path.split("/")[-1].startswith("LABEL"):
         same_folder = "/".join(path.split("/")[0:-1]) + "/" + path.split("/")[-1].split("_")[0] + "_" + path.split("/")[-1].split("_")[1] + "_"
+        if path.split("/")[-1].split("_")[2] == "direct" or path.split("/")[-1].split("_")[2] == "total":
+            same_folder += path.split("/")[-1].split("_")[2]  # fucking bilirubin
     else:
         same_folder = "/".join(path.split("/")[0:-1]) + "/"
 
@@ -182,7 +184,7 @@ if __name__ == "__main__":
     folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
     ending = "_features_v.0.0.14.csv"
 
-    for label in subtask_1_labels:
+    for label in ['LABEL_Bilirubin_total', 'LABEL_Bilirubin_direct']:
         path = folder + label + ending
         print("imputing ", label, "...", sep="")
         impute_features_with_strategies_and_save(path)
