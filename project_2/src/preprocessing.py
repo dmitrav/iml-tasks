@@ -30,9 +30,9 @@ def impute_data_with_strategies(data, random_seed=555):
 
     imputed_data = [
         ("impute_simple_mean", SimpleImputer(strategy="mean").fit_transform(data)),
-        ("impute_simple_median", SimpleImputer(strategy="median").fit_transform(data)),
-        ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
-        ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
+        # ("impute_simple_median", SimpleImputer(strategy="median").fit_transform(data)),
+        # ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
+        # ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
         ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data))
         # ("impute_iter_median", IterativeImputer(initial_strategy="median", random_state=random_seed).fit_transform(data)),
         # ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
@@ -111,14 +111,17 @@ def engineer_and_save_features():
 def impute_features_with_strategies_and_save(path):
     """ Impute features and save datasets. """
 
-    features = pandas.read_csv(path)
+    features = pandas.read_csv(path).iloc[:,2:]
 
     imputed_features = impute_data_with_strategies(numpy.array(features))
 
-    save_to_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+    if path.split("/")[-1].startswith("LABEL"):
+        same_folder = "/".join(path.split("/")[0:-1]) + "/" + path.split("/")[-1].split("_")[0] + "_" + path.split("/")[-1].split("_")[1]
+    else:
+        same_folder = "/".join(path.split("/")[0:-1]) + "/"
 
     for name, data in imputed_features:
-        pandas.DataFrame(data).to_csv(save_to_path + name + "_" + version + ".csv")
+        pandas.DataFrame(data).to_csv(same_folder + name + "_" + version + ".csv")
 
 
 def generate_label_specific_features(features, labels):
@@ -148,9 +151,7 @@ def generate_label_specific_features(features, labels):
         else:
             percent = 0.5
 
-        low_percent_finite_values_pid = negative_class_features.loc[
-            numpy.sum(numpy.isfinite(negative_class_features.iloc[:, 1:]), 1) / negative_class_features.shape[
-                1] >= percent, "pid"]
+        low_percent_finite_values_pid = negative_class_features.loc[numpy.sum(numpy.isfinite(negative_class_features.iloc[:, 1:]), 1) / negative_class_features.shape[1] >= percent, "pid"]
 
         filtered_pid = numpy.concatenate((positive_class_pid, low_percent_finite_values_pid), axis=None)
 
@@ -175,15 +176,22 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
+    # generate_label_specific_features(features, labels)
+
     labels = pandas.read_csv(train_labels_path)
 
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
-    features = pandas.read_csv(features_path).iloc[:, 1:]
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/" + subtask_1_labels[0] + "_features_v.0.0.14.csv"
+
+    impute_features_with_strategies_and_save(features_path)
+
+    # features = pandas.read_csv(features_path).iloc[:, 1:]
+    # labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), subtask_1_labels[0]]
 
     # TODO: impute values with methods,
     #       then perform upsampling + downsampling to balance out the dataset
 
-    generate_label_specific_features(features, labels)
 
 
 
+
+    print()
