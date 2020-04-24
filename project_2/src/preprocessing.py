@@ -102,7 +102,7 @@ def engineer_and_save_features():
 
     assert features.shape[0] == labels.shape[0]
     # since the order in features was not changed, assign ids to features
-    features['pid'] = labels['pid']
+    features.insert(0, 'pid', labels['pid'])
 
     path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
     features.to_csv(path + "engineered_features_" + version + ".csv")
@@ -121,34 +121,69 @@ def impute_features_with_strategies_and_save(path):
         pandas.DataFrame(data).to_csv(save_to_path + name + "_" + version + ".csv")
 
 
+def generate_label_specific_features(features, labels):
+    """ This method takes engineered features with nans as input,
+        performs filtering of patients with high percent of nans for each label separately
+        (to decrease imbalance in data), and saves the resulting datasets. """
+
+    # check how imbalanced labels are initially
+    initial_positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
+
+    positive_class_percent = []
+
+    for label in subtask_1_labels:
+
+        # get pid of patients that are of negative and positive classes
+        negative_class_pid = labels.loc[labels.loc[:, label] == 0, "pid"]
+        positive_class_pid = labels.loc[labels.loc[:, label] == 1, "pid"]
+
+        print(label, ", initial size of positive class: ", positive_class_pid.shape[0], sep="")
+
+        # get corresponding features of negative class
+        negative_class_features = features.loc[features.loc[:, "pid"].isin(negative_class_pid), :]
+
+        # among those, get pid of patients that have >= certain % of nans
+        if initial_positive_class_percent[label] < 20:
+            percent = 0.75
+        else:
+            percent = 0.5
+
+        low_percent_finite_values_pid = negative_class_features.loc[
+            numpy.sum(numpy.isfinite(negative_class_features.iloc[:, 1:]), 1) / negative_class_features.shape[
+                1] >= percent, "pid"]
+
+        filtered_pid = numpy.concatenate((positive_class_pid, low_percent_finite_values_pid), axis=None)
+
+        # subset those from the initial dataset
+        new_features = features.loc[features.loc[:, "pid"].isin(filtered_pid), :]
+        new_labels = labels.loc[labels.loc[:, "pid"].isin(filtered_pid), :]
+
+        print(label, ", new features shape: ", new_features.shape[0], sep="")
+
+        # check how imbalanced labels are now
+        positive_class_percent.append(numpy.sum(new_labels.loc[:, label], 0) / new_labels.shape[0] * 100)
+
+        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+        new_features.to_csv(path + label + "_features_" + version + ".csv")
+
+        print(label, ": dataset saved\n", sep="")
+
+    print("\npositive class imbalance:")
+    print("before:", initial_positive_class_percent.tolist())
+    print("after:", positive_class_percent)
+
+
 if __name__ == "__main__":
 
     labels = pandas.read_csv(train_labels_path)
 
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.13.csv"
-    data = numpy.array(pandas.read_csv(features_path))
-    features = data[:, 1:-1]
-    pid = data[:,-1]
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
+    features = pandas.read_csv(features_path).iloc[:, 1:]
 
-
-    # TODO: perform filtering of samples with large percent of nans for each class,
-    #       then impute values with methods,
+    # TODO: impute values with methods,
     #       then perform upsampling + downsampling to balance out the dataset
 
-    # check how imbalanced labels are
-    positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
-
-    for label in subtask_1_labels:
-
-        negative_class_indices = labels.loc[:, label] == 0
-
-        negative_features = features[negative_class_indices, :]
-
-        finite_values_percent_per_sample = numpy.sum(numpy.isfinite(features[:, 1:]), 1) / features.shape[1]
+    generate_label_specific_features(features, labels)
 
 
-
-    print(positive_class_percent)
-
-    print()
 
