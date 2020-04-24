@@ -54,8 +54,14 @@ def get_engineered_features(dataset):
             finite_records = patient_records[numpy.isfinite(patient_records)]  # remove nans
 
             if finite_records.shape[0] > 0:
-                # use only finite records if there are any, otherwise only nans are produced
+                # use only finite records if there are any, otherwise only nans will be produced
                 patient_records = finite_records
+
+            if finite_records.shape[0] > 1:
+                # if there are at least 2 points, get the slope
+                linear_slope = numpy.polyfit([x for x in range(1,patient_records.shape[0]+1)], patient_records, 1)[0]
+            else:
+                linear_slope = 0
 
             # collect new features
             new_features = [
@@ -63,7 +69,9 @@ def get_engineered_features(dataset):
                 numpy.min(patient_records),
                 numpy.max(patient_records),
                 numpy.var(patient_records),
-                numpy.unique(patient_records).shape[0]
+                numpy.sum(numpy.isfinite(patient_records)),  # number of finite values
+                numpy.sum(patient_records),  # "auc"
+                linear_slope
             ]
 
             new_dataset[i][j].extend(new_features)
@@ -107,5 +115,8 @@ def impute_features_with_strategies_and_save(path):
 
 if __name__ == "__main__":
 
-    pass
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.12.csv"
+    features = numpy.array(pandas.read_csv(features_path)[:,1:])
+
+    print()
 

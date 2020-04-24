@@ -1,8 +1,9 @@
 
 import pandas, numpy, time
 from project_2.src.constants import train_path, test_path, train_labels_path
-from project_2.src.constants import subtask_1_labels
+from project_2.src.constants import subtask_1_labels, version
 from matplotlib import pyplot
+import seaborn
 
 
 def inspect_number_of_finite_values():
@@ -49,7 +50,7 @@ def inspect_nan_values():
     x = [0]
     y = [full_data.shape[0]]
     for i in range(full_data.shape[1]):
-        data = full_data.dropna(thresh=i + 1)  # drop row if it has < i+project_1 finite values
+        data = full_data.dropna(thresh=i + 1)  # drop row if it has < i+1 finite values
         x.append(i + 1)
         y.append(data.shape[0])
 
@@ -60,6 +61,25 @@ def inspect_nan_values():
     pyplot.show()
 
 
+def plot_distributions_of_finite_values_percent():
+    """ This method plots distributions of finite values in engineered feature matrix:
+        - per feature,
+        - per sample. """
+
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_" + version + ".csv"
+    features = numpy.array(pandas.read_csv(features_path))
+
+    finite_values_percent_per_sample = numpy.sum(numpy.isfinite(features[:, 1:]), 1) / features.shape[1]
+    finite_values_percent_per_feature = numpy.sum(numpy.isfinite(features[:, 1:]), 0) / features.shape[0]
+
+    pyplot.figure(figsize=(10, 7), dpi=80)
+    kwargs = dict(hist_kws={'alpha': .5}, kde_kws={'linewidth': 2})
+    seaborn.distplot(finite_values_percent_per_feature, color="orange", label="per feature", **kwargs)
+    seaborn.distplot(finite_values_percent_per_sample, color="dodgerblue", label="per sample", **kwargs)
+    pyplot.legend()
+    pyplot.show()
+
+
 if __name__ == "__main__":
 
     full_data = pandas.read_csv(train_path)
@@ -67,3 +87,9 @@ if __name__ == "__main__":
 
     pandas.set_option('display.max_columns', 50)
     print(full_data.iloc[:, 3:].describe())
+
+    # check how imbalanced labels are
+    positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0 ] * 100
+    print(positive_class_percent)
+
+

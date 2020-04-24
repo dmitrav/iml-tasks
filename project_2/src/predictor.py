@@ -105,7 +105,9 @@ def bruteforce():
         json.dump(results, file)
 
 
-if __name__ == "__main__":
+def downscaled_bruteforce():
+    """ Downscaled method used in v.0.0.8.
+        Kept unchanged since then. """
 
     warnings.filterwarnings("ignore")
 
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/impute_simple_mean_v.0.0.8.csv"
     features = numpy.array(pandas.read_csv(features_path))
 
-    # take a subset of features to train a model faster (50% of the entire dataset)
+    # take a subset of features to train a model faster (30% of the entire dataset)
     indices = numpy.random.choice(features.shape[0], features.shape[0] // 3)
     features_subset = features[indices, :]
     labels = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
@@ -175,17 +177,23 @@ if __name__ == "__main__":
                         result["labels"].append(label)
                         result["scores"].append(f1_score.tolist())
 
-                    print(round((m+1) / len(svm_models) * 100, 2), "% of models scored\n")
+                    print(round((m + 1) / len(svm_models) * 100, 2), "% of models scored\n")
                     results["svm_models"].append(result)
 
         timepoint_2 = time.time()
         print("results appended,", (timepoint_2 - timepoint_1) // 60 + 1, "minutes elapsed")
-        print(round((j+1) / len(imputed_scaled_features) * 100, 2), "% of the total run finished")
+        print(round((j + 1) / len(imputed_scaled_features) * 100, 2), "% of the total run finished")
 
         # iteration = j * len(nfolds_range) + k * len(random_seeds) + r+1
         # total = len(imputed_scaled_features) * 5 * len(random_seeds)
         # print(round(iteration / total * 100, 2), "% finished\n")
 
     # save main results
-    with open("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_svm_impute_simple_mean_" + version + ".json", "w") as file:
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_svm_impute_simple_mean_" + version + ".json",
+              "w") as file:
         json.dump(results, file)
+
+
+if __name__ == "__main__":
+
+    pass
