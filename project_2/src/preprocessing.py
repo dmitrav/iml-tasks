@@ -1,7 +1,8 @@
-import numpy, pandas
+import numpy, pandas, time
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler, PowerTransformer, QuantileTransformer, Normalizer
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import SimpleImputer, IterativeImputer
+from imblearn.combine import SMOTETomek
 from project_2.src.constants import train_path, test_path, train_labels_path, version
 from project_2.src.constants import subtask_1_labels
 from project_2.src import data_analysis
@@ -111,17 +112,19 @@ def engineer_and_save_features():
 def impute_features_with_strategies_and_save(path):
     """ Impute features and save datasets. """
 
-    features = pandas.read_csv(path).iloc[:,2:]
+    features = pandas.read_csv(path).iloc[:,1:]
 
-    imputed_features = impute_data_with_strategies(numpy.array(features))
+    imputed_features = impute_data_with_strategies(numpy.array(features.iloc[:,1:]))
 
     if path.split("/")[-1].startswith("LABEL"):
-        same_folder = "/".join(path.split("/")[0:-1]) + "/" + path.split("/")[-1].split("_")[0] + "_" + path.split("/")[-1].split("_")[1]
+        same_folder = "/".join(path.split("/")[0:-1]) + "/" + path.split("/")[-1].split("_")[0] + "_" + path.split("/")[-1].split("_")[1] + "_"
     else:
         same_folder = "/".join(path.split("/")[0:-1]) + "/"
 
     for name, data in imputed_features:
-        pandas.DataFrame(data).to_csv(same_folder + name + "_" + version + ".csv")
+        data = pandas.DataFrame(data)
+        data.insert(0, 'pid', features['pid'])
+        data.to_csv(same_folder + name + "_" + version + ".csv")
 
 
 def generate_label_specific_features(features, labels):
@@ -176,22 +179,11 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
-    # generate_label_specific_features(features, labels)
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    ending = "_features_v.0.0.14.csv"
 
-    labels = pandas.read_csv(train_labels_path)
-
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/" + subtask_1_labels[0] + "_features_v.0.0.14.csv"
-
-    impute_features_with_strategies_and_save(features_path)
-
-    # features = pandas.read_csv(features_path).iloc[:, 1:]
-    # labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), subtask_1_labels[0]]
-
-    # TODO: impute values with methods,
-    #       then perform upsampling + downsampling to balance out the dataset
-
-
-
-
-
-    print()
+    for label in subtask_1_labels:
+        path = folder + label + ending
+        print("imputing ", label, "...", sep="")
+        impute_features_with_strategies_and_save(path)
+        print("saved\n")

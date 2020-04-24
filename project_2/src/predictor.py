@@ -5,8 +5,9 @@ from project_2.src.constants import train_path, train_labels_path
 from project_2.src.constants import subtask_1_labels
 from project_2.src.constants import version
 from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_validate
 from sklearn.svm import SVC
+from imblearn.combine import SMOTETomek
 
 
 def create_svm_models(C_range, random_seed):
@@ -196,6 +197,41 @@ def downscaled_bruteforce():
 
 if __name__ == "__main__":
 
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/LABEL_BaseExcess_impute_simple_mean_v.0.0.16.csv"
 
+    labels = pandas.read_csv(train_labels_path)
+    features = pandas.read_csv(features_path)
+    labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), "LABEL_BaseExcess"]
 
-    pass
+    seed = 42
+
+    # TODO: try scaling here
+
+    resampler = SMOTETomek(random_state=seed)  # takes about 30 seconds
+    X_resampled, y_resampled = resampler.fit_resample(features, labels)
+
+    cv = KFold(n_splits=10, shuffle=True, random_state=seed)
+    svm_models = create_svm_models([10 ** x for x in range(-5, 6)], seed)
+
+    scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
+
+    # take a subset of features to train a model faster (30% of the entire dataset)
+    indices = numpy.random.choice(X_resampled.shape[0], X_resampled.shape[0] // 3)
+    features_subset = features[indices, :]
+    labels_subset = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
+
+    for i in range(len(svm_models)):
+
+        print("evaluation for", svm_models[i][0], "started...")
+
+        timepoint_1 = time.time()
+
+        scores = cross_validate(svm_models[i][1], features_subset, labels_subset, cv=cv, scoring=scoring)
+
+        print(svm_models[i][0], "scored with:")
+        for key in scoring.keys():
+            print(key, "=", scores["test_"+key])
+        print()
+
+        timepoint_2 = time.time()
+        print((timepoint_2 - timepoint_1) // 60 + 1, "minutes elapsed")
