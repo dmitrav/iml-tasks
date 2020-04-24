@@ -195,43 +195,92 @@ def downscaled_bruteforce():
         json.dump(results, file)
 
 
-if __name__ == "__main__":
-
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/LABEL_BaseExcess_impute_simple_mean_v.0.0.16.csv"
-
-    labels = pandas.read_csv(train_labels_path)
-    features = pandas.read_csv(features_path)
-    labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), "LABEL_BaseExcess"]
+def run_label_specific_svm(label_name, imputation_name):
 
     seed = 42
-
-    # TODO: try scaling here
-
-    resampler = SMOTETomek(random_state=seed)  # takes about 30 seconds
-    X_resampled, y_resampled = resampler.fit_resample(features, labels)
-
-    cv = KFold(n_splits=10, shuffle=True, random_state=seed)
+    kfold = 10
+    cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
     svm_models = create_svm_models([10 ** x for x in range(-5, 6)], seed)
-
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
-    # take a subset of features to train a model faster (30% of the entire dataset)
-    indices = numpy.random.choice(X_resampled.shape[0], X_resampled.shape[0] // 3)
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    ending = "_v.0.0.17.csv"
+
+    all_results = {"svm": []}
+
+    labels = pandas.read_csv(train_labels_path)
+    features = pandas.read_csv(folder + label_name + "_" + imputation_name + ending)
+    labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), label_name]
+
+    # take a subset of features to train a model faster (of size shape[0] / factor)
+    if features.shape[0] > 15000:
+        factor = 3
+    elif 10000 < features.shape[0] <= 15000:
+        factor = 2
+    else:
+        factor = 1
+
+    indices = numpy.random.choice(features.shape[0], features.shape[0] // factor)
     features_subset = features[indices, :]
     labels_subset = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
 
-    for i in range(len(svm_models)):
+    scaled_features = preprocessing.scale_data_with_methods(features_subset.iloc[:, 2:])
 
-        print("evaluation for", svm_models[i][0], "started...")
+    for j in range(len(scaled_features)):
 
-        timepoint_1 = time.time()
+        print("with scaling: ", scaled_features[j][0])
 
-        scores = cross_validate(svm_models[i][1], features_subset, labels_subset, cv=cv, scoring=scoring)
+        print("balancing data... ", end="")
+        resampler = SMOTETomek(random_state=seed)  # takes about 30 seconds
+        X_resampled, y_resampled = resampler.fit_resample(scaled_features[j][1], labels)
+        print("done!")
 
-        print(svm_models[i][0], "scored with:")
-        for key in scoring.keys():
-            print(key, "=", scores["test_"+key])
-        print()
+        for i in range(len(svm_models)):
 
-        timepoint_2 = time.time()
-        print((timepoint_2 - timepoint_1) // 60 + 1, "minutes elapsed")
+            print("evaluation for", svm_models[i][0], "started...")
+
+            timepoint_1 = time.time()
+
+            scores = cross_validate(svm_models[i][1], y_resampled, labels_subset, cv=cv, scoring=scoring)
+
+            print(svm_models[i][0], "scored with:")
+            for key in scoring.keys():
+                print(key, "=", scores["test_" + key])
+            print()
+
+            timepoint_2 = time.time()
+            print((timepoint_2 - timepoint_1) // 60 + 1, "minutes elapsed")
+
+            all_results["svm"].append({
+                "labels": label_name,
+                "scores": scores,
+                "model": svm_models[i][0],  # model name
+                "kfold": kfold,
+                "random_seed": seed,
+                "scaling": scaled_features[j][0],
+                "imputation": imputation_name,
+                "engineering": "median, min, max, var, finites, sum, slope",
+                "version": version
+            })
+
+    # save results
+    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    with open(outfile, "w") as file:
+        json.dump(all_results, file)
+
+
+if __name__ == "__main__":
+
+    processes = []
+    start_time = time.time()
+    for imputation in ["impute_simple_mean", "impute_iter_mean"]:
+        for label in subtask_1_labels:
+
+            p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
+            processes.append(p)
+            p.start()
+
+    for process in processes:
+        process.join()
+
+    print('All done.')
