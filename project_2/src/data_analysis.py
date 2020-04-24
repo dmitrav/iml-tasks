@@ -61,13 +61,14 @@ def inspect_nan_values():
     pyplot.show()
 
 
-def plot_distributions_of_finite_values_percent():
+def plot_distributions_of_finite_values_percent(features=None):
     """ This method plots distributions of finite values in engineered feature matrix:
         - per feature,
         - per sample. """
 
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_" + version + ".csv"
-    features = numpy.array(pandas.read_csv(features_path))
+    if features is None:
+        features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.13.csv"
+        features = numpy.array(pandas.read_csv(features_path))
 
     finite_values_percent_per_sample = numpy.sum(numpy.isfinite(features[:, 1:]), 1) / features.shape[1]
     finite_values_percent_per_feature = numpy.sum(numpy.isfinite(features[:, 1:]), 0) / features.shape[0]

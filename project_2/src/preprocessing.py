@@ -3,6 +3,8 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, Ro
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import SimpleImputer, IterativeImputer
 from project_2.src.constants import train_path, test_path, train_labels_path, version
+from project_2.src.constants import subtask_1_labels
+from project_2.src import data_analysis
 
 
 def scale_data_with_methods(imputed_data):
@@ -91,13 +93,19 @@ def engineer_and_save_features():
     """ Obvious. """
 
     full_data = pandas.read_csv(train_path)
+    labels = pandas.read_csv(train_labels_path)
 
     data_with_nans = full_data.iloc[:, 3:]
 
     features = get_engineered_features(numpy.array(data_with_nans))
+    features = pandas.DataFrame(features)
+
+    assert features.shape[0] == labels.shape[0]
+    # since the order in features was not changed, assign ids to features
+    features['pid'] = labels['pid']
 
     path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
-    pandas.DataFrame(features).to_csv(path + "engineered_features_" + version + ".csv")
+    features.to_csv(path + "engineered_features_" + version + ".csv")
 
 
 def impute_features_with_strategies_and_save(path):
@@ -115,8 +123,32 @@ def impute_features_with_strategies_and_save(path):
 
 if __name__ == "__main__":
 
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.12.csv"
-    features = numpy.array(pandas.read_csv(features_path)[:,1:])
+    labels = pandas.read_csv(train_labels_path)
+
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.13.csv"
+    data = numpy.array(pandas.read_csv(features_path))
+    features = data[:, 1:-1]
+    pid = data[:,-1]
+
+
+    # TODO: perform filtering of samples with large percent of nans for each class,
+    #       then impute values with methods,
+    #       then perform upsampling + downsampling to balance out the dataset
+
+    # check how imbalanced labels are
+    positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
+
+    for label in subtask_1_labels:
+
+        negative_class_indices = labels.loc[:, label] == 0
+
+        negative_features = features[negative_class_indices, :]
+
+        finite_values_percent_per_sample = numpy.sum(numpy.isfinite(features[:, 1:]), 1) / features.shape[1]
+
+
+
+    print(positive_class_percent)
 
     print()
 
