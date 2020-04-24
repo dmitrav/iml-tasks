@@ -222,18 +222,18 @@ def run_label_specific_svm(label_name, imputation_name):
 
     indices = numpy.random.choice(features.shape[0], features.shape[0] // factor)
     features_subset = features.iloc[indices, :]
-    labels_subset = labels.iloc[indices, :]  # keep dataframe to be able to select label by name
+    labels_subset = labels.iloc[indices]  # keep dataframe to be able to select label by name
 
     scaled_features = preprocessing.scale_data_with_methods(features_subset.iloc[:, 2:])
 
     for j in range(len(scaled_features)):
 
-        print("with scaling: ", scaled_features[j][0])
+        # print("with scaling: ", scaled_features[j][0])
 
-        print("balancing data... ", end="")
+        # print("balancing data... ", end="")
         resampler = SMOTETomek(random_state=seed)  # takes about 30 seconds
-        X_resampled, y_resampled = resampler.fit_resample(scaled_features[j][1], labels)
-        print("done!")
+        X_resampled, y_resampled = resampler.fit_resample(scaled_features[j][1], labels_subset)
+        # print("done!")
 
         for i in range(len(svm_models)):
 
@@ -241,7 +241,7 @@ def run_label_specific_svm(label_name, imputation_name):
 
             timepoint_1 = time.time()
 
-            scores = cross_validate(svm_models[i][1], y_resampled, labels_subset, cv=cv, scoring=scoring)
+            scores = cross_validate(svm_models[i][1], X_resampled, y_resampled, cv=cv, scoring=scoring)
 
             print(svm_models[i][0], "scored with:")
             for key in scoring.keys():
@@ -279,6 +279,7 @@ if __name__ == "__main__":
 
     processes = []
     start_time = time.time()
+
     for imputation in ["impute_simple_mean", "impute_iter_mean"]:
         for label in subtask_1_labels:
 
@@ -289,4 +290,4 @@ if __name__ == "__main__":
     for process in processes:
         process.join()
 
-    print('All done.')
+    print('All done within', (time.time() - start_time) // 60 + 1, "minutes")
