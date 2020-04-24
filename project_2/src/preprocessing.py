@@ -119,7 +119,7 @@ def impute_features_with_strategies_and_save(path):
     if path.split("/")[-1].startswith("LABEL"):
         same_folder = "/".join(path.split("/")[0:-1]) + "/" + path.split("/")[-1].split("_")[0] + "_" + path.split("/")[-1].split("_")[1] + "_"
         if path.split("/")[-1].split("_")[2] == "direct" or path.split("/")[-1].split("_")[2] == "total":
-            same_folder += path.split("/")[-1].split("_")[2]  # fucking bilirubin
+            same_folder += path.split("/")[-1].split("_")[2] + "_"  # fucking bilirubin
     else:
         same_folder = "/".join(path.split("/")[0:-1]) + "/"
 

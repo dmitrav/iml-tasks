@@ -253,7 +253,13 @@ def run_label_specific_svm(label_name, imputation_name):
 
             all_results["svm"].append({
                 "labels": label_name,
-                "scores": scores,
+                "scores": {
+                    'accuracy': scores["test_accuracy"],
+                    'precision': scores["test_precision"],
+                    'recall': scores["test_recall"],
+                    'roc_auc': scores["test_roc_auc"],
+                    'f1': scores["test_f1"]
+                },
                 "model": svm_models[i][0],  # model name
                 "kfold": kfold,
                 "random_seed": seed,
