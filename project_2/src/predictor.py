@@ -200,7 +200,7 @@ def run_label_specific_svm(label_name, imputation_name):
     seed = 42
     kfold = 10
     cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
-    svm_models = create_svm_models([10 ** x for x in range(-5, 6)], seed)
+    svm_models = create_svm_models([10 ** x for x in range(-2, 6)], seed)
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
     folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
@@ -237,13 +237,13 @@ def run_label_specific_svm(label_name, imputation_name):
 
         for i in range(len(svm_models)):
 
-            print("evaluation for", svm_models[i][0], "started...")
+            # print("evaluation for", svm_models[i][0], "started...")
 
             timepoint_1 = time.time()
 
             scores = cross_validate(svm_models[i][1], X_resampled, y_resampled, cv=cv, scoring=scoring)
 
-            print(svm_models[i][0], "scored with:")
+            print(svm_models[i][0], "for", label_name, "with", imputation_name, "scored with:")
             for key in scoring.keys():
                 print(key, "=", scores["test_" + key])
             print()
@@ -254,11 +254,11 @@ def run_label_specific_svm(label_name, imputation_name):
             all_results["svm"].append({
                 "labels": label_name,
                 "scores": {
-                    'accuracy': scores["test_accuracy"],
-                    'precision': scores["test_precision"],
-                    'recall': scores["test_recall"],
-                    'roc_auc': scores["test_roc_auc"],
-                    'f1': scores["test_f1"]
+                    'accuracy': scores["test_accuracy"].tolist(),
+                    'precision': scores["test_precision"].tolist(),
+                    'recall': scores["test_recall"].tolist(),
+                    'roc_auc': scores["test_roc_auc"].tolist(),
+                    'f1': scores["test_f1"].tolist()
                 },
                 "model": svm_models[i][0],  # model name
                 "kfold": kfold,
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_simple_mean", "impute_iter_mean"]:
+    for imputation in ["impute_simple_mean"]:  # , "impute_iter_mean"]:
         for label in subtask_1_labels:
 
             p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
@@ -290,4 +290,4 @@ if __name__ == "__main__":
     for process in processes:
         process.join()
 
-    print('All done within', (time.time() - start_time) // 60 + 1, "minutes")
+    print('All done within', (time.time() - start_time) // 3600 + 1, "hours")
