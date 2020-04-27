@@ -249,7 +249,7 @@ def run_label_specific_svm(label_name, imputation_name):
             print()
 
             timepoint_2 = time.time()
-            print((timepoint_2 - timepoint_1) // 60 + 1, "minutes elapsed\n")
+            print(int((timepoint_2 - timepoint_1) // 60 + 1), "minutes elapsed\n")
 
             all_results["svm"].append({
                 "labels": label_name,
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_simple_mean", "impute_iter_mean"]:
+    for imputation in ["impute_iter_mean"]:
         for label in subtask_1_labels:
 
             p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
@@ -290,4 +290,4 @@ if __name__ == "__main__":
     for process in processes:
         process.join()
 
-    print('All done within', (time.time() - start_time) // 3600 + 1, "hours")
+    print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
