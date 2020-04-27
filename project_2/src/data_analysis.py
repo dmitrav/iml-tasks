@@ -1,5 +1,5 @@
 
-import pandas, numpy, time
+import pandas, numpy, time, json
 from project_2.src.constants import train_path, test_path, train_labels_path
 from project_2.src.constants import subtask_1_labels, version
 from matplotlib import pyplot
@@ -81,16 +81,47 @@ def plot_distributions_of_finite_values_percent(features=None):
     pyplot.show()
 
 
-if __name__ == "__main__":
+def check_imbalance_of_labels():
+    """ Trivial method to assess how imbalanced classes / labels are. """
 
-    full_data = pandas.read_csv(train_path)
     labels = pandas.read_csv(train_labels_path)
-
-    pandas.set_option('display.max_columns', 50)
-    print(full_data.iloc[:, 3:].describe())
 
     # check how imbalanced labels are
     positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0 ] * 100
     print(positive_class_percent)
+
+
+if __name__ == "__main__":
+
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/"
+
+    for label in subtask_1_labels:
+
+        results_file = "results_" + label + "_impute_simple_mean_v.0.0.22.json"
+        with open(folder + results_file, 'r') as file:
+            results = json.load(file)
+
+        run_scores_sums = []
+        for run in results["svm"]:
+            run_sum = 0
+            for metric_name in run["scores"].keys():
+                run_sum += sum(run["scores"][metric_name])
+            run_scores_sums.append(run_sum)
+
+        best_scores = sorted(run_scores_sums, reverse=True)[0:10]
+        indices = [run_scores_sums.index(score) for score in best_scores]
+
+        print("Best scores for ", label, ":", sep="")
+        print()
+        for index in indices:
+
+            full_model_description = results["svm"][index]['model'] + " + " + results["svm"][index]['imputation'] + " + " + results["svm"][index]['scaling']
+            print("Model ", index+1, ": ", full_model_description, sep="")
+            print('\taccuracy:', results["svm"][index]["scores"]['accuracy'])
+            print('\tprecision:', results["svm"][index]["scores"]['precision'])
+            print('\trecall:', results["svm"][index]["scores"]['recall'])
+            print('\troc_auc:', results["svm"][index]["scores"]['roc_auc'])
+            print('\tf1:', results["svm"][index]["scores"]['f1'])
+            print()
 
 
