@@ -200,10 +200,10 @@ def run_label_specific_svm(label_name, imputation_name):
     seed = 42
     kfold = 10
     cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
-    svm_models = create_svm_models([10 ** x for x in range(-1, 3)], seed)
+    svm_models = create_svm_models([10 ** x for x in range(-2, 1)], seed)
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
     ending = "_v.0.0.17.csv"
 
     all_results = {"svm": []}
@@ -270,7 +270,7 @@ def run_label_specific_svm(label_name, imputation_name):
             })
 
     # save results
-    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    outfile = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
     with open(outfile, "w") as file:
         json.dump(all_results, file)
 
