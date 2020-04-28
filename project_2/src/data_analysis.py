@@ -93,11 +93,11 @@ def check_imbalance_of_labels():
 
 if __name__ == "__main__":
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/run_3/"
 
     for label in subtask_1_labels:
 
-        results_file = "results_" + label + "_impute_iter_mean_v.0.0.23.json"
+        results_file = "results_" + label + "_impute_iter_mean_v.0.0.24.json"
         with open(folder + results_file, 'r') as file:
             results = json.load(file)
 
@@ -117,11 +117,11 @@ if __name__ == "__main__":
 
             full_model_description = results["svm"][index]['model'] + " + " + results["svm"][index]['imputation'] + " + " + results["svm"][index]['scaling']
             print("Model ", index+1, ": ", full_model_description, sep="")
-            print('\taccuracy:', results["svm"][index]["scores"]['accuracy'])
-            print('\tprecision:', results["svm"][index]["scores"]['precision'])
-            print('\trecall:', results["svm"][index]["scores"]['recall'])
-            print('\troc_auc:', results["svm"][index]["scores"]['roc_auc'])
-            print('\tf1:', results["svm"][index]["scores"]['f1'])
+            print('\taccuracy:', numpy.mean(results["svm"][index]["scores"]['accuracy']))
+            print('\tprecision:', numpy.mean(results["svm"][index]["scores"]['precision']))
+            print('\trecall:', numpy.mean(results["svm"][index]["scores"]['recall']))
+            print('\troc_auc:', numpy.mean(results["svm"][index]["scores"]['roc_auc']))
+            print('\tf1:', numpy.mean(results["svm"][index]["scores"]['f1']))
             print()
 
 

@@ -204,7 +204,7 @@ def run_label_specific_svm(label_name, imputation_name):
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
     folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_v.0.0.17.csv"
+    ending = "_v.0.0.25.csv"
 
     all_results = {"svm": []}
 
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_iter_mean"]:
+    for imputation in ["impute_iter_const"]:
         for label in subtask_1_labels:
 
             p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))

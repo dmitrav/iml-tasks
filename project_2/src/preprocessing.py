@@ -14,10 +14,10 @@ def scale_data_with_methods(imputed_data):
     scaled_data = [
         # ("not_scaled", imputed_data),
         ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
-        ("max_abs_scaler", MaxAbsScaler().fit_transform(imputed_data)),
-        # ("power_yj_scaler", PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)),
-        ("quantile_norm_scaler", QuantileTransformer(output_distribution='normal').fit_transform(imputed_data)),
-        ("quantile_uni_scaler", QuantileTransformer(output_distribution='uniform').fit_transform(imputed_data))
+        # ("max_abs_scaler", MaxAbsScaler().fit_transform(imputed_data)),
+        ("power_yj_scaler", PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)),
+        ("quantile_norm_scaler", QuantileTransformer(output_distribution='normal').fit_transform(imputed_data))
+        # ("quantile_uni_scaler", QuantileTransformer(output_distribution='uniform').fit_transform(imputed_data))
         # ("l2_scaler", Normalizer().fit_transform(imputed_data)),  # sample-wise L2
         # ("robust_scaler", RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data)),
         # ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data))
@@ -30,14 +30,14 @@ def impute_data_with_strategies(data, random_seed=555):
     """ This method makes imputations to the data (with specified random seed). """
 
     imputed_data = [
-        ("impute_simple_mean", SimpleImputer(strategy="mean").fit_transform(data)),
+        # ("impute_simple_mean", SimpleImputer(strategy="mean").fit_transform(data)),
         # ("impute_simple_median", SimpleImputer(strategy="median").fit_transform(data)),
-        # ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
-        # ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
-        ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data))
+        ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
+        ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
+        # ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data))
         # ("impute_iter_median", IterativeImputer(initial_strategy="median", random_state=random_seed).fit_transform(data)),
-        # ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
-        # ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
+        ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
+        ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
     ]
 
     return imputed_data
@@ -181,10 +181,10 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
     ending = "_features_v.0.0.14.csv"
 
-    for label in ['LABEL_Bilirubin_total', 'LABEL_Bilirubin_direct']:
+    for label in subtask_1_labels:
         path = folder + label + ending
         print("imputing ", label, "...", sep="")
         impute_features_with_strategies_and_save(path)

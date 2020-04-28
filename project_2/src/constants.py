@@ -1,5 +1,5 @@
 
-version = "v.0.0.24"
+version = "v.0.0.25"
 
 train_path = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_features.csv"
 train_labels_path = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_labels.csv"
