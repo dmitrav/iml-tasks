@@ -200,7 +200,7 @@ def run_label_specific_svm(label_name, imputation_name):
     seed = 42
     kfold = 10
     cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
-    svm_models = create_svm_models([10 ** x for x in range(-2, 1)], seed)
+    svm_models = create_svm_models([10 ** x for x in range(-2, 0)], seed)
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
     folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_iter_const"]:
+    for imputation in ["impute_simple_most_freq"]:
         for label in subtask_1_labels:
 
             p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))

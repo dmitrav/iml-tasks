@@ -93,11 +93,11 @@ def check_imbalance_of_labels():
 
 if __name__ == "__main__":
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/run_3/"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/"
 
     for label in subtask_1_labels:
 
-        results_file = "results_" + label + "_impute_iter_mean_v.0.0.24.json"
+        results_file = "results_" + label + "_impute_iter_most_freq_v.0.0.25.json"
         with open(folder + results_file, 'r') as file:
             results = json.load(file)
 
