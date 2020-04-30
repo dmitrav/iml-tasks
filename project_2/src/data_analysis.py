@@ -87,7 +87,7 @@ def check_imbalance_of_labels():
     labels = pandas.read_csv(train_labels_path)
 
     # check how imbalanced labels are
-    positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0 ] * 100
+    positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
     print(positive_class_percent)
 
 
@@ -129,5 +129,7 @@ def find_best_models_from_run():
 
 if __name__ == "__main__":
 
-    pass
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
+    features = numpy.array(pandas.read_csv(features_path))
+    plot_distributions_of_finite_values_percent(features)
 
