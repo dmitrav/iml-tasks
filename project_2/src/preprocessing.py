@@ -90,8 +90,44 @@ def get_engineered_features(dataset):
     return numpy.array(flattened)
 
 
+def flatten_and_save_features():
+    """ This method takes 12 time-series values for each patient and each feature
+        and makes 12 features with single values (flattens the time-series).
+
+        SLOW, but works. """
+
+    full_data = pandas.read_csv(train_path)
+    labels = pandas.read_csv(train_labels_path)
+
+    data_with_nans = full_data.iloc[:, 3:]
+
+    new_dataset = [[[] for x in range(data_with_nans.shape[1])] for x in range(data_with_nans.shape[0] // 12)]
+
+    for j in range(data_with_nans.shape[1]):
+        for i in range(data_with_nans.shape[0] // 12):
+            patient_records = data_with_nans.iloc[i * 12:(i + 1) * 12, j]
+            new_dataset[i][j].extend(patient_records.tolist())
+
+    # reshape data structure to a matrix
+    flattened = []
+    for i in range(len(new_dataset)):
+        patient_features = []
+        for j in range(len(new_dataset[i])):
+            patient_features.extend(new_dataset[i][j])
+        flattened.append(patient_features)
+
+    flattened_data = pandas.DataFrame(flattened)
+
+    assert flattened_data.shape[0] == labels.shape[0]
+    # since the order in features was not changed, assign ids to features
+    flattened_data.insert(0, 'pid', labels['pid'])
+
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+    flattened_data.to_csv(path + "flattened_features_" + version + ".csv")
+
+
 def engineer_and_save_features():
-    """ Obvious. """
+    """ This method call feature engineering routine and saves results. """
 
     full_data = pandas.read_csv(train_path)
     labels = pandas.read_csv(train_labels_path)
@@ -181,11 +217,13 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_features_v.0.0.14.csv"
+    # folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    # ending = "_features_v.0.0.14.csv"
+    #
+    # for label in subtask_1_labels:
+    #     path = folder + label + ending
+    #     print("imputing ", label, "...", sep="")
+    #     impute_features_with_strategies_and_save(path)
+    #     print("saved\n")
 
-    for label in subtask_1_labels:
-        path = folder + label + ending
-        print("imputing ", label, "...", sep="")
-        impute_features_with_strategies_and_save(path)
-        print("saved\n")
+    flatten_and_save_features()

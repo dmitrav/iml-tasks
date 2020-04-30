@@ -91,7 +91,9 @@ def check_imbalance_of_labels():
     print(positive_class_percent)
 
 
-if __name__ == "__main__":
+def find_best_models_from_run():
+    """ This method sorts methods for each label by sum of all metrics,
+        and prints scores for 10 best models for each label. """
 
     folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/"
 
@@ -114,9 +116,9 @@ if __name__ == "__main__":
         print("Best scores for ", label, ":", sep="")
         print()
         for index in indices:
-
-            full_model_description = results["svm"][index]['model'] + " + " + results["svm"][index]['imputation'] + " + " + results["svm"][index]['scaling']
-            print("Model ", index+1, ": ", full_model_description, sep="")
+            full_model_description = results["svm"][index]['model'] + " + " + results["svm"][index][
+                'imputation'] + " + " + results["svm"][index]['scaling']
+            print("Model ", index + 1, ": ", full_model_description, sep="")
             print('\taccuracy:', numpy.mean(results["svm"][index]["scores"]['accuracy']))
             print('\tprecision:', numpy.mean(results["svm"][index]["scores"]['precision']))
             print('\trecall:', numpy.mean(results["svm"][index]["scores"]['recall']))
@@ -124,4 +126,8 @@ if __name__ == "__main__":
             print('\tf1:', numpy.mean(results["svm"][index]["scores"]['f1']))
             print()
 
+
+if __name__ == "__main__":
+
+    pass
 
