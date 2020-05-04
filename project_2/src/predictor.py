@@ -200,11 +200,11 @@ def run_label_specific_svm(label_name, imputation_name):
     seed = 42
     kfold = 10
     cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
-    svm_models = create_svm_models([10 ** x for x in range(-2, 0)], seed)
+    svm_models = create_svm_models([10 ** x for x in range(-3, 1)], seed)
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_v.0.0.25.csv"
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+    ending = "_v.0.0.27.csv"
 
     all_results = {"svm": []}
 
@@ -231,7 +231,7 @@ def run_label_specific_svm(label_name, imputation_name):
         # print("with scaling: ", scaled_features[j][0])
 
         # print("balancing data... ", end="")
-        resampler = SMOTETomek(random_state=seed)  # takes about 30 seconds
+        resampler = SMOTETomek(random_state=seed)
         X_resampled, y_resampled = resampler.fit_resample(scaled_features[j][1], labels_subset)
         # print("done!")
 
@@ -270,7 +270,7 @@ def run_label_specific_svm(label_name, imputation_name):
             })
 
     # save results
-    outfile = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_flattened_" + label_name + "_" + imputation_name + "_" + version + ".json"
     with open(outfile, "w") as file:
         json.dump(all_results, file)
 
@@ -280,8 +280,8 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_simple_most_freq"]:
-        for label in subtask_1_labels:
+    for imputation in ["impute_iter_mean"]:
+        for label in ['LABEL_Lactate',  'LABEL_AST', 'LABEL_Alkalinephos', 'LABEL_Bilirubin_total', 'LABEL_SaO2']:
 
             p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
             processes.append(p)

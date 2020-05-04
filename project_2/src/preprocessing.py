@@ -4,7 +4,7 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import SimpleImputer, IterativeImputer
 from imblearn.combine import SMOTETomek
 from project_2.src.constants import train_path, test_path, train_labels_path, version
-from project_2.src.constants import subtask_1_labels
+from project_2.src.constants import subtask_1_labels, subtask_3_labels, subtask_2_labels
 from project_2.src import data_analysis
 
 
@@ -26,18 +26,20 @@ def scale_data_with_methods(imputed_data):
     return scaled_data
 
 
-def impute_data_with_strategies(data, random_seed=555):
+def impute_data_with_strategies(data, random_seed=777):
     """ This method makes imputations to the data (with specified random seed). """
 
     imputed_data = [
         # ("impute_simple_mean", SimpleImputer(strategy="mean").fit_transform(data)),
         # ("impute_simple_median", SimpleImputer(strategy="median").fit_transform(data)),
-        ("impute_simple_const", SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)),
-        ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent", add_indicator=True).fit_transform(data)),
+        ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
+        # ("impute_simple_const", SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)),
+        ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
+        ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)),
         ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)),
-        ("impute_iter_median", IterativeImputer(initial_strategy="median", random_state=random_seed, add_indicator=True).fit_transform(data)),
-        ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed, add_indicator=True).fit_transform(data)),
-        ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed, add_indicator=True).fit_transform(data))
+        # ("impute_iter_median", IterativeImputer(initial_strategy="median", random_state=random_seed, add_indicator=True).fit_transform(data)),
+        ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
+        ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
     ]
 
     return imputed_data
@@ -171,11 +173,11 @@ def generate_label_specific_features(features, labels):
         (to decrease imbalance in data), and saves the resulting datasets. """
 
     # check how imbalanced labels are initially
-    initial_positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
+    initial_positive_class_percent = numpy.sum(labels.loc[:, subtask_2_labels], 0) / labels.shape[0] * 100
 
     positive_class_percent = []
 
-    for label in subtask_1_labels:
+    for label in subtask_2_labels:
 
         # get pid of patients that are of negative and positive classes
         negative_class_pid = labels.loc[labels.loc[:, label] == 0, "pid"]
@@ -188,11 +190,12 @@ def generate_label_specific_features(features, labels):
 
         # among those, get pid of patients that have >= certain % of nans
         if initial_positive_class_percent[label] < 20:
+            percent = 0.8  # for Sepsis -> results in 25% of the positive class
             # percent = 0.75  # for engineered features
-            percent = 0.28  # for flattened features
+            # percent = 0.28  # for flattened features
         else:
-            # percent = 0.5  # for engineered features
-            percent = 0.15  # for flattened features
+            percent = 0.5  # for engineered features
+            # percent = 0.15  # for flattened features
 
         low_percent_finite_values_pid = negative_class_features.loc[numpy.sum(numpy.isfinite(negative_class_features.iloc[:, 1:]), 1) / negative_class_features.shape[1] >= percent, "pid"]
 
@@ -207,8 +210,8 @@ def generate_label_specific_features(features, labels):
         # check how imbalanced labels are now
         positive_class_percent.append(numpy.sum(new_labels.loc[:, label], 0) / new_labels.shape[0] * 100)
 
-        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
-        new_features.to_csv(path + label + "_flattened_" + version + ".csv")
+        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+        new_features.to_csv(path + label + "_features_" + version + ".csv")
 
         print(label, ": dataset saved\n", sep="")
 
@@ -219,11 +222,22 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
-    ending = "_flattened_v.0.0.26.csv"
+    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
+    features = pandas.read_csv(features_path)
+    labels = pandas.read_csv(train_labels_path)
 
-    for label in subtask_1_labels:
+    # take engineered features with nans and
+    generate_label_specific_features(features, labels)
+
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    ending = "_features_v.0.0.28.csv"
+
+    # impute them
+    for label in subtask_2_labels:
         path = folder + label + ending
         print("imputing ", label, "...", sep="")
         impute_features_with_strategies_and_save(path)
         print("saved\n")
+
+
+

@@ -1,7 +1,7 @@
 
 import pandas, numpy, time, json
 from project_2.src.constants import train_path, test_path, train_labels_path
-from project_2.src.constants import subtask_1_labels, version
+from project_2.src.constants import subtask_1_labels, subtask_2_labels, subtask_3_labels, version
 from matplotlib import pyplot
 import seaborn
 
@@ -87,7 +87,7 @@ def check_imbalance_of_labels():
     labels = pandas.read_csv(train_labels_path)
 
     # check how imbalanced labels are
-    positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
+    positive_class_percent = numpy.sum(labels.loc[:, subtask_2_labels], 0) / labels.shape[0] * 100
     print(positive_class_percent)
 
 
@@ -95,11 +95,12 @@ def find_best_models_from_run():
     """ This method sorts methods for each label by sum of all metrics,
         and prints scores for 10 best models for each label. """
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/"
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/"
 
-    for label in subtask_1_labels:
+    for label in ['LABEL_Lactate',  'LABEL_AST', 'LABEL_Alkalinephos', 'LABEL_Bilirubin_total', 'LABEL_SaO2']:
+    # for label in subtask_1_labels:
 
-        results_file = "results_" + label + "_impute_iter_most_freq_v.0.0.25.json"
+        results_file = "results_flattened_" + label + "_impute_iter_mean_v.0.0.27.json"
         with open(folder + results_file, 'r') as file:
             results = json.load(file)
 
@@ -129,7 +130,10 @@ def find_best_models_from_run():
 
 if __name__ == "__main__":
 
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
-    features = numpy.array(pandas.read_csv(features_path))
-    plot_distributions_of_finite_values_percent(features)
+    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
+    # features = numpy.array(pandas.read_csv(features_path))
+    # plot_distributions_of_finite_values_percent(features)
 
+    # find_best_models_from_run()
+
+    check_imbalance_of_labels()
