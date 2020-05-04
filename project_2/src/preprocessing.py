@@ -222,14 +222,21 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
-    features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
-    features = pandas.read_csv(features_path)
-    labels = pandas.read_csv(train_labels_path)
+    """ STEP 0: engineer features """
+    pass
 
-    # take engineered features with nans and
-    generate_label_specific_features(features, labels)
+    """ STEP 1: generate label-specific features by down-sampling over-represented negative class """
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    # features_path = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
+    # features = pandas.read_csv(features_path)
+    # labels = pandas.read_csv(train_labels_path)
+    #
+    # # take engineered features with nans and
+    # generate_label_specific_features(features, labels)
+
+    """ STEP 2: impute label-specific features with different strategies """
+
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
     ending = "_features_v.0.0.28.csv"
 
     # impute them
