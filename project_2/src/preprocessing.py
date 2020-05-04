@@ -21,7 +21,7 @@ def scale_data_with_methods(imputed_data):
         # ("quantile_uni_scaler", QuantileTransformer(output_distribution='uniform').fit_transform(imputed_data))
         # ("l2_scaler", Normalizer().fit_transform(imputed_data)),  # sample-wise L2
         # ("robust_scaler", RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data)),
-        # ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data))
+        ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data)),
         ("nystroem", Nystroem(gamma=.2, random_state=1, n_components=imputed_data.shape[0]).fit_transform(imputed_data))
     ]
 

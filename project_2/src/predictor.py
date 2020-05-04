@@ -9,6 +9,7 @@ from sklearn.model_selection import cross_validate
 from sklearn.svm import SVC, LinearSVR
 from imblearn.combine import SMOTETomek
 from sklearn import linear_model
+from tqdm.auto import trange
 
 
 def create_svm_models(C_range, random_seed):
@@ -260,8 +261,8 @@ def run_label_specific_svm(label_name, imputation_name):
     svm_models = create_svm_models([10 ** x for x in range(-2, 1)], seed)
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_v.0.0.28.csv"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+    ending = "_v.0.0.31.csv"
 
     all_results = {"svm": []}
 
@@ -327,7 +328,7 @@ def run_label_specific_svm(label_name, imputation_name):
             })
 
     # save results
-    outfile = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    outfile = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/subtask_2/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
     with open(outfile, "w") as file:
         json.dump(all_results, file)
 
@@ -351,7 +352,7 @@ def run_label_specific_regression(label_name, imputation_name):
                'neg_median_absolute': 'neg_median_absolute_error',
                'r2': 'r2'}
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
     ending = "_v.0.0.34.csv"
 
     all_results = {"results": []}
@@ -362,9 +363,9 @@ def run_label_specific_regression(label_name, imputation_name):
 
     # take a subset of features to train a model faster (of size shape[0] / factor)
     if features.shape[0] > 15000:
-        factor = 3
-    elif 10000 < features.shape[0] <= 15000:
         factor = 2
+    elif 10000 < features.shape[0] <= 15000:
+        factor = 1
     else:
         factor = 1
 
@@ -412,7 +413,7 @@ def run_label_specific_regression(label_name, imputation_name):
             })
 
     # save results
-    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/subtask_3/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    outfile = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/subtask_3/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
     with open(outfile, "w") as file:
         json.dump(all_results, file)
 
@@ -422,21 +423,20 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_iter_const",
-                       "impute_iter_mean",
-                       "impute_iter_mean_ids",
-                       "impute_iter_most_freq",
-                       "impute_simple_const",
-                       "impute_simple_const_ids",
-                       "impute_simple_most_freq"]:
+    imputations = ["impute_iter_const"]
 
-        for label in subtask_3_labels:
+    # imputations = ["impute_iter_const", "impute_iter_mean", "impute_iter_mean_ids", "impute_iter_most_freq",
+    #                "impute_simple_const", "impute_simple_const_ids", "impute_simple_most_freq"]
 
-            p = multiprocessing.Process(target=run_label_specific_regression, args=(label,imputation))
-            processes.append(p)
-            p.start()
+    for i in trange(len(imputations)):
+        for j in trange(len(subtask_3_labels)):
+            run_label_specific_regression(subtask_3_labels[j], imputations[i])
 
-    for process in processes:
-        process.join()
+    #         p = multiprocessing.Process(target=run_label_specific_regression, args=(label,imputation))
+    #         processes.append(p)
+    #         p.start()
+    #
+    # for process in processes:
+    #     process.join()
 
     print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
