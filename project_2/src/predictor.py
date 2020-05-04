@@ -203,8 +203,8 @@ def run_label_specific_svm(label_name, imputation_name):
     svm_models = create_svm_models([10 ** x for x in range(-2, 1)], seed)
     scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_" + version + ".csv"
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    ending = "_v.0.0.28.csv"
 
     all_results = {"svm": []}
 
@@ -270,7 +270,7 @@ def run_label_specific_svm(label_name, imputation_name):
             })
 
     # save results
-    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    outfile = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
     with open(outfile, "w") as file:
         json.dump(all_results, file)
 
@@ -280,7 +280,13 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_iter_mean"]:
+    for imputation in ["impute_iter_const",
+                       "impute_iter_mean",
+                       "impute_iter_mean_ids",
+                       "impute_iter_most_freq",
+                       "impute_simple_const",
+                       "impute_simple_most_freq"]:
+
         for label in subtask_2_labels:
 
             p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))

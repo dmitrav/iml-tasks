@@ -32,14 +32,14 @@ def impute_data_with_strategies(data, random_seed=777):
     imputed_data = [
         # ("impute_simple_mean", SimpleImputer(strategy="mean").fit_transform(data)),
         # ("impute_simple_median", SimpleImputer(strategy="median").fit_transform(data)),
-        ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
-        # ("impute_simple_const", SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)),
-        ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
+        # ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
+        # ("impute_simple_const_ids", SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)),
+        # ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
         ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)),
-        ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)),
-        # ("impute_iter_median", IterativeImputer(initial_strategy="median", random_state=random_seed, add_indicator=True).fit_transform(data)),
-        ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
-        ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
+        ("impute_iter_mean_ids", IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data))
+        # ("impute_iter_median_ids", IterativeImputer(initial_strategy="median", random_state=random_seed, add_indicator=True).fit_transform(data)),
+        # ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
+        # ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
     ]
 
     return imputed_data
