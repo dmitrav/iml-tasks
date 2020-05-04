@@ -33,6 +33,18 @@ def create_svr_models(C_range, random_seed):
     return models
 
 
+def create_sgd_models(alpha, random_seed):
+    """ This method initialises and returns SVM models with parameters. """
+
+    models = []
+    for loss in ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']:
+        for a in alpha:
+            model = ("sgd_" + loss + str(a), linear_model.SGDRegressor(loss=loss, alpha=a, random_state=random_seed))
+            models.append(model)
+
+    return models
+
+
 def create_lasso_models(alpha, random_seed):
     """ This method initialises and returns SVM models with parameters. """
 
@@ -322,16 +334,16 @@ def run_label_specific_svm(label_name, imputation_name):
 
 def run_label_specific_regression(label_name, imputation_name):
 
-    seed = 42
+    seed = 321
     kfold = 10
 
     cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
 
-    models = [("sgd", linear_model.SGDRegressor())
-              # *create_svr_models([10 ** x for x in range(-2, 3)], seed),
-              # *create_lasso_models([10 ** x for x in range(-2, 3)], seed),
-              # *create_ridge_models([10 ** x for x in range(-2, 3)], seed),
-              # *create_elastic_net_models([10 ** x for x in range(-2, 3)], seed)
+    models = [*create_sgd_models([10 ** x for x in range(-3, 4)], seed),
+              *create_svr_models([10 ** x for x in range(-3, 4)], seed),
+              *create_lasso_models([10 ** x for x in range(-3, 4)], seed),
+              *create_ridge_models([10 ** x for x in range(-3, 4)], seed),
+              *create_elastic_net_models([10 ** x for x in range(-3, 4)], seed)
               ]
 
     scoring = {'max_error': 'max_error',
@@ -339,7 +351,7 @@ def run_label_specific_regression(label_name, imputation_name):
                'neg_median_absolute': 'neg_median_absolute_error',
                'r2': 'r2'}
 
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
     ending = "_v.0.0.34.csv"
 
     all_results = {"results": []}
@@ -366,18 +378,13 @@ def run_label_specific_regression(label_name, imputation_name):
 
         # print("with scaling: ", scaled_features[j][0])
 
-        # print("balancing data... ", end="")
-        resampler = SMOTETomek(random_state=seed)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_features[j][1], labels_subset)
-        # print("done!")
-
         for i in range(len(models)):
 
             # print("evaluation for", svm_models[i][0], "started...")
 
             timepoint_1 = time.time()
 
-            scores = cross_validate(models[i][1], X_resampled, y_resampled, cv=cv, scoring=scoring)
+            scores = cross_validate(models[i][1], scaled_features[j][1], labels_subset, cv=cv, scoring=scoring)
 
             print(models[i][0], "for", label_name, "with imputation", imputation_name, "and scaling", scaled_features[j][0], "scored with:")
             for key in scoring.keys():
@@ -390,10 +397,10 @@ def run_label_specific_regression(label_name, imputation_name):
             all_results["results"].append({
                 "labels": label_name,
                 "scores": {
-                    'max_error': scores["max_error"].tolist(),
-                    'neg_mean_squared': scores["neg_mean_squared"].tolist(),
-                    'neg_median_absolute': scores["neg_median_absolute"].tolist(),
-                    'r2': scores["r2"].tolist()
+                    'max_error': scores['test_max_error'].tolist(),
+                    'neg_mean_squared': scores["test_neg_mean_squared"].tolist(),
+                    'neg_median_absolute': scores["test_neg_median_absolute"].tolist(),
+                    'r2': scores["test_r2"].tolist()
                 },
                 "model": models[i][0],  # model name
                 "kfold": kfold,
@@ -405,7 +412,7 @@ def run_label_specific_regression(label_name, imputation_name):
             })
 
     # save results
-    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/subtask_3/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
     with open(outfile, "w") as file:
         json.dump(all_results, file)
 
@@ -415,23 +422,21 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_iter_const"]:
-                       # "impute_iter_mean",
-                       # "impute_iter_mean_ids",
-                       # "impute_iter_most_freq",
-                       # "impute_simple_const",
-                       # "impute_simple_const_ids",
-                       # "impute_simple_most_freq"]:
+    for imputation in ["impute_iter_const",
+                       "impute_iter_mean",
+                       "impute_iter_mean_ids",
+                       "impute_iter_most_freq",
+                       "impute_simple_const",
+                       "impute_simple_const_ids",
+                       "impute_simple_most_freq"]:
 
-        for label in subtask_2_labels:
+        for label in subtask_3_labels:
 
-            run_label_specific_regression(label, imputation)
+            p = multiprocessing.Process(target=run_label_specific_regression, args=(label,imputation))
+            processes.append(p)
+            p.start()
 
-            # p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
-            # processes.append(p)
-            # p.start()
-
-    # for process in processes:
-    #     process.join()
+    for process in processes:
+        process.join()
 
     print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
