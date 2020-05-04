@@ -91,6 +91,23 @@ def check_imbalance_of_labels():
     print(positive_class_percent)
 
 
+def plot_distributions_of_labels():
+    """ This is for subtask 3. """
+
+    labels = pandas.read_csv(train_labels_path)
+
+    f, axes = pyplot.subplots(2, 2, figsize=(10, 7), dpi=80)
+    kwargs = dict(hist_kws={'alpha': .5}, kde_kws={'linewidth': 2})
+
+    seaborn.distplot(labels.loc[:, subtask_3_labels[0]], label=subtask_3_labels[0], **kwargs, ax=axes[0,0])
+    seaborn.distplot(labels.loc[:, subtask_3_labels[1]], label=subtask_3_labels[1], **kwargs, ax=axes[0,1])
+    seaborn.distplot(labels.loc[:, subtask_3_labels[2]], label=subtask_3_labels[2], **kwargs, ax=axes[1,0])
+    seaborn.distplot(labels.loc[:, subtask_3_labels[3]], label=subtask_3_labels[3], **kwargs, ax=axes[1,1])
+
+    pyplot.legend()
+    pyplot.show()
+
+
 def find_best_models_from_run():
     """ This method sorts methods for each label by sum of all metrics,
         and prints scores for 10 best models for each label. """
@@ -136,4 +153,6 @@ if __name__ == "__main__":
 
     # find_best_models_from_run()
 
-    check_imbalance_of_labels()
+    # check_imbalance_of_labels()
+
+    plot_distributions_of_labels()

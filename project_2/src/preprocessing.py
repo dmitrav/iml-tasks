@@ -6,6 +6,7 @@ from imblearn.combine import SMOTETomek
 from project_2.src.constants import train_path, test_path, train_labels_path, version
 from project_2.src.constants import subtask_1_labels, subtask_3_labels, subtask_2_labels
 from project_2.src import data_analysis
+from sklearn.kernel_approximation import Nystroem
 
 
 def scale_data_with_methods(imputed_data):
@@ -21,6 +22,7 @@ def scale_data_with_methods(imputed_data):
         # ("l2_scaler", Normalizer().fit_transform(imputed_data)),  # sample-wise L2
         # ("robust_scaler", RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data)),
         # ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data))
+        ("nystroem", Nystroem(gamma=.2, random_state=1, n_components=imputed_data.shape[0]).fit_transform(imputed_data))
     ]
 
     return scaled_data
@@ -32,14 +34,14 @@ def impute_data_with_strategies(data, random_seed=777):
     imputed_data = [
         # ("impute_simple_mean", SimpleImputer(strategy="mean").fit_transform(data)),
         # ("impute_simple_median", SimpleImputer(strategy="median").fit_transform(data)),
-        # ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
-        # ("impute_simple_const_ids", SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)),
-        # ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
+        ("impute_simple_const", SimpleImputer(strategy="constant").fit_transform(data)),
+        ("impute_simple_const_ids", SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)),
+        ("impute_simple_most_freq", SimpleImputer(strategy="most_frequent").fit_transform(data)),
         ("impute_iter_mean", IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)),
-        ("impute_iter_mean_ids", IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data))
+        ("impute_iter_mean_ids", IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)),
         # ("impute_iter_median_ids", IterativeImputer(initial_strategy="median", random_state=random_seed, add_indicator=True).fit_transform(data)),
-        # ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
-        # ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
+        ("impute_iter_const", IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)),
+        ("impute_iter_most_freq", IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data))
     ]
 
     return imputed_data
@@ -167,6 +169,39 @@ def impute_features_with_strategies_and_save(path):
         data.to_csv(same_folder + name + "_" + version + ".csv")
 
 
+def generate_label_specific_features_for_regression(features, labels):
+    """ This is for subtask 3. Some filtering is done for each label. """
+
+    for label in subtask_3_labels:
+
+        # hardcoded interval of normal values, based on distribution plots
+        interval = ()
+        if "RRate" in label:
+            interval = (10, 35)
+        elif "ABPm" in label:
+            interval = (50, 130)
+        elif "SpO2" in label:
+            interval = (90, 100)
+        elif "Heartrate" in label:
+            interval = (40, 140)
+        else:
+            raise ValueError("Hardcoded labels are wrong.")
+
+        # get pids of normal values
+        normal_values_indices = labels.loc[(interval[0] < labels.loc[:, label]) & (labels.loc[:, label] < interval[1]), "pid"]
+        # filter out the rest
+        normal_features = features.loc[features.loc[:, "pid"].isin(normal_values_indices), :]
+
+        print("\noutliers removal for", label)
+        print("size before:", features.shape[0])
+        print("size after:", normal_features.shape[0])
+
+        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+        normal_features.to_csv(path + label + "_features_" + version + ".csv")
+
+        print(label, ": dataset saved", sep="")
+
+
 def generate_label_specific_features(features, labels):
     """ This method takes engineered features with nans as input,
         performs filtering of patients with high percent of nans for each label separately
@@ -190,7 +225,8 @@ def generate_label_specific_features(features, labels):
 
         # among those, get pid of patients that have >= certain % of nans
         if initial_positive_class_percent[label] < 20:
-            percent = 0.8  # for Sepsis -> results in 25% of the positive class
+            percent = 0.265  # Sepsis: flattened features -> results in 25% of the positive class
+            # percent = 0.8  # Sepsis: engineered features -> results in 25% of the positive class
             # percent = 0.75  # for engineered features
             # percent = 0.28  # for flattened features
         else:
@@ -210,8 +246,8 @@ def generate_label_specific_features(features, labels):
         # check how imbalanced labels are now
         positive_class_percent.append(numpy.sum(new_labels.loc[:, label], 0) / new_labels.shape[0] * 100)
 
-        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
-        new_features.to_csv(path + label + "_features_" + version + ".csv")
+        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+        new_features.to_csv(path + label + "_flattened_" + version + ".csv")
 
         print(label, ": dataset saved\n", sep="")
 
@@ -222,29 +258,51 @@ def generate_label_specific_features(features, labels):
 
 if __name__ == "__main__":
 
-    """ STEP 0: engineer features """
-    pass
-
-    """ STEP 1: generate label-specific features by down-sampling over-represented negative class """
-
-    # features_path = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
+    """ Classification preprocessing pipeline.
+    
+    # # STEP 0: engineer features
+    # engineer_and_save_features()
+    # flatten_and_save_features()
+    # 
+    # # STEP 1: generate label-specific features by down-sampling over-represented negative class
+    # 
+    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
     # features = pandas.read_csv(features_path)
     # labels = pandas.read_csv(train_labels_path)
     #
     # # take engineered features with nans and
     # generate_label_specific_features(features, labels)
-
-    """ STEP 2: impute label-specific features with different strategies """
-
-    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_features_v.0.0.28.csv"
-
+    # 
+    # # STEP 2: impute label-specific features with different strategies
+    # 
+    # folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+    # ending = "_flattened_v.0.0.31.csv"
+    # 
     # impute them
-    for label in subtask_2_labels:
+    # for label in subtask_2_labels:
+    #     path = folder + label + ending
+    #     print("imputing ", label, "...", sep="")
+    #     impute_features_with_strategies_and_save(path)
+    #     print("saved\n")
+
+    """
+
+    """ Regression setting: subtask 3 """
+
+    # # STEP 1: generate label-specific features by removing outliers
+    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
+    # features = pandas.read_csv(features_path)
+    # labels = pandas.read_csv(train_labels_path)
+    #
+    # generate_label_specific_features_for_regression(features, labels)
+
+    # # STEP 2: impute label-specific features with different strategies
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    ending = "_features_v.0.0.34.csv"
+
+    for label in subtask_3_labels:
         path = folder + label + ending
         print("imputing ", label, "...", sep="")
         impute_features_with_strategies_and_save(path)
         print("saved\n")
-
-
 

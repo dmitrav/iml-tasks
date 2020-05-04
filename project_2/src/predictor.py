@@ -6,19 +6,64 @@ from project_2.src.constants import subtask_1_labels, subtask_2_labels, subtask_
 from project_2.src.constants import version
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_validate
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVR
 from imblearn.combine import SMOTETomek
+from sklearn import linear_model
 
 
 def create_svm_models(C_range, random_seed):
     """ This method initialises and returns SVM models with parameters. """
 
-    svm_models = []
+    models = []
     for C in C_range:
         model = ("svm_sigmoid_" + str(C), SVC(C=C, kernel="sigmoid", random_state=random_seed, probability=True))
-        svm_models.append(model)
+        models.append(model)
 
-    return svm_models
+    return models
+
+
+def create_svr_models(C_range, random_seed):
+    """ This method initialises and returns SVM models with parameters. """
+
+    models = []
+    for C in C_range:
+        model = ("svr_" + str(C), LinearSVR(C=C, random_state=random_seed))
+        models.append(model)
+
+    return models
+
+
+def create_lasso_models(alpha, random_seed):
+    """ This method initialises and returns SVM models with parameters. """
+
+    models = []
+    for a in alpha:
+        model = ("lasso_" + str(a), linear_model.Lasso(alpha=a, random_state=random_seed))
+        models.append(model)
+
+    return models
+
+
+def create_ridge_models(alpha, random_seed):
+    """ This method initialises and returns SVM models with parameters. """
+
+    models = []
+    for a in alpha:
+        model = ("ridge_" + str(a), linear_model.Ridge(alpha=a, random_state=random_seed))
+        models.append(model)
+
+    return models
+
+
+def create_elastic_net_models(alpha, random_seed):
+    """ This method initialises and returns SVM models with parameters. """
+
+    models = []
+    for a in alpha:
+        model = ("elastic_net_" + str(a), linear_model.ElasticNet(alpha=a, random_state=random_seed))
+        models.append(model)
+
+    return models
 
 
 def bruteforce():
@@ -275,25 +320,118 @@ def run_label_specific_svm(label_name, imputation_name):
         json.dump(all_results, file)
 
 
+def run_label_specific_regression(label_name, imputation_name):
+
+    seed = 42
+    kfold = 10
+
+    cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
+
+    models = [("sgd", linear_model.SGDRegressor())
+              # *create_svr_models([10 ** x for x in range(-2, 3)], seed),
+              # *create_lasso_models([10 ** x for x in range(-2, 3)], seed),
+              # *create_ridge_models([10 ** x for x in range(-2, 3)], seed),
+              # *create_elastic_net_models([10 ** x for x in range(-2, 3)], seed)
+              ]
+
+    scoring = {'max_error': 'max_error',
+               'neg_mean_squared': 'neg_mean_squared_error',
+               'neg_median_absolute': 'neg_median_absolute_error',
+               'r2': 'r2'}
+
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/label_specific/"
+    ending = "_v.0.0.34.csv"
+
+    all_results = {"results": []}
+
+    labels = pandas.read_csv(train_labels_path)
+    features = pandas.read_csv(folder + label_name + "_" + imputation_name + ending)
+    labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), label_name]
+
+    # take a subset of features to train a model faster (of size shape[0] / factor)
+    if features.shape[0] > 15000:
+        factor = 3
+    elif 10000 < features.shape[0] <= 15000:
+        factor = 2
+    else:
+        factor = 1
+
+    indices = numpy.random.choice(features.shape[0], features.shape[0] // factor, replace=False)
+    features_subset = features.iloc[indices, :]
+    labels_subset = labels.iloc[indices]  # keep dataframe to be able to select label by name
+
+    scaled_features = preprocessing.scale_data_with_methods(features_subset.iloc[:, 2:])
+
+    for j in range(len(scaled_features)):
+
+        # print("with scaling: ", scaled_features[j][0])
+
+        # print("balancing data... ", end="")
+        resampler = SMOTETomek(random_state=seed)
+        X_resampled, y_resampled = resampler.fit_resample(scaled_features[j][1], labels_subset)
+        # print("done!")
+
+        for i in range(len(models)):
+
+            # print("evaluation for", svm_models[i][0], "started...")
+
+            timepoint_1 = time.time()
+
+            scores = cross_validate(models[i][1], X_resampled, y_resampled, cv=cv, scoring=scoring)
+
+            print(models[i][0], "for", label_name, "with imputation", imputation_name, "and scaling", scaled_features[j][0], "scored with:")
+            for key in scoring.keys():
+                print(key, "=", scores["test_" + key])
+            print()
+
+            timepoint_2 = time.time()
+            print(int((timepoint_2 - timepoint_1) // 60 + 1), "minutes elapsed\n")
+
+            all_results["results"].append({
+                "labels": label_name,
+                "scores": {
+                    'max_error': scores["max_error"].tolist(),
+                    'neg_mean_squared': scores["neg_mean_squared"].tolist(),
+                    'neg_median_absolute': scores["neg_median_absolute"].tolist(),
+                    'r2': scores["r2"].tolist()
+                },
+                "model": models[i][0],  # model name
+                "kfold": kfold,
+                "random_seed": seed,
+                "scaling": scaled_features[j][0],
+                "imputation": imputation_name,
+                "engineering": "median, min, max, var, finites, sum, slope",
+                "version": version
+            })
+
+    # save results
+    outfile = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/results_" + label_name + "_" + imputation_name + "_" + version + ".json"
+    with open(outfile, "w") as file:
+        json.dump(all_results, file)
+
+
 if __name__ == "__main__":
 
     processes = []
     start_time = time.time()
 
-    for imputation in ["impute_iter_const",
-                       "impute_iter_mean",
-                       "impute_iter_mean_ids",
-                       "impute_iter_most_freq",
-                       "impute_simple_const",
-                       "impute_simple_most_freq"]:
+    for imputation in ["impute_iter_const"]:
+                       # "impute_iter_mean",
+                       # "impute_iter_mean_ids",
+                       # "impute_iter_most_freq",
+                       # "impute_simple_const",
+                       # "impute_simple_const_ids",
+                       # "impute_simple_most_freq"]:
 
         for label in subtask_2_labels:
 
-            p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
-            processes.append(p)
-            p.start()
+            run_label_specific_regression(label, imputation)
 
-    for process in processes:
-        process.join()
+            # p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
+            # processes.append(p)
+            # p.start()
+
+    # for process in processes:
+    #     process.join()
 
     print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
