@@ -145,6 +145,40 @@ def find_best_models_from_run():
             print()
 
 
+def find_best_regression_models_from_run():
+    """ This method sorts methods for each label by sum of all metrics,
+        and prints scores for 10 best models for each label. """
+
+    folder = "/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/subtask_3/run_1/"
+
+    for label in subtask_3_labels:
+
+        results_file = "results_" + label + "_impute_iter_const_v.0.0.35.json"
+        with open(folder + results_file, 'r') as file:
+            results = json.load(file)
+
+        run_scores_sums = []
+        for run in results["results"]:
+            run_sum = 0
+            for metric_name in run["scores"].keys():
+                run_sum += sum(run["scores"][metric_name])
+            run_scores_sums.append(run_sum)
+
+        best_scores = sorted(run_scores_sums, reverse=True)[0:10]
+        indices = [run_scores_sums.index(score) for score in best_scores]
+
+        print("Best scores for ", label, ":", sep="")
+        print()
+        for index in indices:
+            full_model_description = results["results"][index]['model'] + " + " + results["results"][index]['imputation'] + " + " + results["results"][index]['scaling']
+            print("Model ", index + 1, ": ", full_model_description, sep="")
+            print('\tmax_error:', numpy.mean(results["results"][index]["scores"]['max_error']))
+            print('\tneg_mean_squared:', numpy.mean(results["results"][index]["scores"]['neg_mean_squared']))
+            print('\tneg_median_absolute:', numpy.mean(results["results"][index]["scores"]['neg_median_absolute']))
+            print('\tr2:', numpy.mean(results["results"][index]["scores"]['r2']))
+            print()
+
+
 if __name__ == "__main__":
 
     # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
@@ -155,4 +189,6 @@ if __name__ == "__main__":
 
     # check_imbalance_of_labels()
 
-    plot_distributions_of_labels()
+    # plot_distributions_of_labels()
+
+    find_best_regression_models_from_run()

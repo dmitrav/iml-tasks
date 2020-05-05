@@ -335,16 +335,18 @@ def run_label_specific_svm(label_name, imputation_name):
 
 def run_label_specific_regression(label_name, imputation_name):
 
-    seed = 321
+    seed = 415
     kfold = 10
 
     cv = KFold(n_splits=kfold, shuffle=True, random_state=seed)
 
-    models = [*create_sgd_models([10 ** x for x in range(-3, 4)], seed),
-              *create_svr_models([10 ** x for x in range(-3, 4)], seed),
-              *create_lasso_models([10 ** x for x in range(-3, 4)], seed),
-              *create_ridge_models([10 ** x for x in range(-3, 4)], seed),
-              *create_elastic_net_models([10 ** x for x in range(-3, 4)], seed)
+    alphas = [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 100]
+
+    models = [# *create_sgd_models([10 ** x for x in range(-3, 4)], seed),
+              # *create_svr_models([10 ** x for x in range(-3, 4)], seed),
+              *create_lasso_models(alphas, seed),
+              *create_ridge_models(alphas, seed),
+              *create_elastic_net_models(alphas, seed)
               ]
 
     scoring = {'max_error': 'max_error',
@@ -361,13 +363,16 @@ def run_label_specific_regression(label_name, imputation_name):
     features = pandas.read_csv(folder + label_name + "_" + imputation_name + ending)
     labels = labels.loc[labels.loc[:, "pid"].isin(features["pid"]), label_name]
 
-    # take a subset of features to train a model faster (of size shape[0] / factor)
-    if features.shape[0] > 15000:
-        factor = 2
-    elif 10000 < features.shape[0] <= 15000:
-        factor = 1
-    else:
-        factor = 1
+    # # take a subset of features to train a model faster (of size shape[0] / factor)
+    # if features.shape[0] > 15000:
+    #     factor = 2
+    # elif 10000 < features.shape[0] <= 15000:
+    #     factor = 1
+    # else:
+    #     factor = 1
+
+    # regression take much faster, no need to subset
+    factor = 1
 
     indices = numpy.random.choice(features.shape[0], features.shape[0] // factor, replace=False)
     features_subset = features.iloc[indices, :]
@@ -423,7 +428,7 @@ if __name__ == "__main__":
     processes = []
     start_time = time.time()
 
-    imputations = ["impute_iter_const"]
+    imputations = ["impute_iter_most_freq"]
 
     # imputations = ["impute_iter_const", "impute_iter_mean", "impute_iter_mean_ids", "impute_iter_most_freq",
     #                "impute_simple_const", "impute_simple_const_ids", "impute_simple_most_freq"]

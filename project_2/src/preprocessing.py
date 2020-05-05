@@ -14,15 +14,15 @@ def scale_data_with_methods(imputed_data):
 
     scaled_data = [
         # ("not_scaled", imputed_data),
-        ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
+        # ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
         # ("max_abs_scaler", MaxAbsScaler().fit_transform(imputed_data)),
         ("power_yj_scaler", PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)),
         # ("quantile_norm_scaler", QuantileTransformer(output_distribution='normal').fit_transform(imputed_data))
         # ("quantile_uni_scaler", QuantileTransformer(output_distribution='uniform').fit_transform(imputed_data))
         # ("l2_scaler", Normalizer().fit_transform(imputed_data)),  # sample-wise L2
         # ("robust_scaler", RobustScaler(quantile_range=(25, 75)).fit_transform(imputed_data)),
-        ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data)),
-        ("nystroem", Nystroem(gamma=.2, random_state=1, n_components=imputed_data.shape[0]).fit_transform(imputed_data))
+        ("min_max_scaler", MinMaxScaler().fit_transform(imputed_data))
+        # ("nystroem", Nystroem(gamma=.2, random_state=1, n_components=imputed_data.shape[0]).fit_transform(imputed_data))
     ]
 
     return scaled_data
