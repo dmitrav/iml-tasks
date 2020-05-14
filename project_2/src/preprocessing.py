@@ -7,6 +7,7 @@ from project_2.src.constants import train_path, test_path, train_labels_path, ve
 from project_2.src.constants import subtask_1_labels, subtask_3_labels, subtask_2_labels
 from project_2.src import data_analysis
 from sklearn.kernel_approximation import Nystroem
+from tqdm.auto import trange
 
 
 def scale_data_with_methods(imputed_data):
@@ -175,7 +176,6 @@ def generate_label_specific_features_for_regression(features, labels):
     for label in subtask_3_labels:
 
         # hardcoded interval of normal values, based on distribution plots
-        interval = ()
         if "RRate" in label:
             interval = (10, 35)
         elif "ABPm" in label:
@@ -196,8 +196,8 @@ def generate_label_specific_features_for_regression(features, labels):
         print("size before:", features.shape[0])
         print("size after:", normal_features.shape[0])
 
-        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
-        normal_features.to_csv(path + label + "_features_" + version + ".csv")
+        path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+        normal_features.to_csv(path + label + "_flattened_" + version + ".csv")
 
         print(label, ": dataset saved", sep="")
 
@@ -290,19 +290,19 @@ if __name__ == "__main__":
     """ Regression setting: subtask 3 """
 
     # # STEP 1: generate label-specific features by removing outliers
-    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/engineered_features_v.0.0.14.csv"
+    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
     # features = pandas.read_csv(features_path)
     # labels = pandas.read_csv(train_labels_path)
     #
     # generate_label_specific_features_for_regression(features, labels)
 
-    # # STEP 2: impute label-specific features with different strategies
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/"
-    ending = "_features_v.0.0.34.csv"
+    # STEP 2: impute label-specific features with different strategies
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+    ending = "_flattened_v.0.0.37.csv"
 
-    for label in subtask_3_labels:
-        path = folder + label + ending
-        print("imputing ", label, "...", sep="")
+    for i in trange(len(subtask_3_labels)):
+        path = folder + subtask_3_labels[i] + ending
+        print("imputing ", subtask_3_labels[i], "...", sep="")
         impute_features_with_strategies_and_save(path)
         print("saved\n")
 
