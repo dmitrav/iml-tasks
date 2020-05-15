@@ -15,7 +15,7 @@ def scale_data_with_methods(imputed_data):
 
     scaled_data = [
         # ("not_scaled", imputed_data),
-        # ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
+        ("standard_scaler", StandardScaler().fit_transform(imputed_data)),
         # ("max_abs_scaler", MaxAbsScaler().fit_transform(imputed_data)),
         ("power_yj_scaler", PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)),
         # ("quantile_norm_scaler", QuantileTransformer(output_distribution='normal').fit_transform(imputed_data))
@@ -95,22 +95,28 @@ def get_engineered_features(dataset):
     return numpy.array(flattened)
 
 
-def flatten_and_save_features():
+def flatten_and_save_features(train=True):
     """ This method takes 12 time-series values for each patient and each feature
         and makes 12 features with single values (flattens the time-series).
 
         SLOW, but works. """
 
-    full_data = pandas.read_csv(train_path)
-    labels = pandas.read_csv(train_labels_path)
+    if train:
+        full_data = pandas.read_csv(train_path)
+        labels = pandas.read_csv(train_labels_path)
+        addition = ""
+    else:
+        full_data = pandas.read_csv(test_path)
+        labels = pandas.read_csv(train_labels_path)
+        addition = "test/"
 
-    data_with_nans = full_data.iloc[:, 3:]
+    data_with_nans = numpy.array(full_data.iloc[:, 3:])
 
     new_dataset = [[[] for x in range(data_with_nans.shape[1])] for x in range(data_with_nans.shape[0] // 12)]
 
     for j in range(data_with_nans.shape[1]):
         for i in range(data_with_nans.shape[0] // 12):
-            patient_records = data_with_nans.iloc[i * 12:(i + 1) * 12, j]
+            patient_records = data_with_nans[i * 12:(i + 1) * 12, j]
             new_dataset[i][j].extend(patient_records.tolist())
 
     # reshape data structure to a matrix
@@ -123,30 +129,37 @@ def flatten_and_save_features():
 
     flattened_data = pandas.DataFrame(flattened)
 
-    assert flattened_data.shape[0] == labels.shape[0]
-    # since the order in features was not changed, assign ids to features
-    flattened_data.insert(0, 'pid', labels['pid'])
+    if train:
+        assert flattened_data.shape[0] == labels.shape[0]
+        # since the order in features was not changed, assign ids to features
+        flattened_data.insert(0, 'pid', labels['pid'])
 
-    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/" + addition
     flattened_data.to_csv(path + "flattened_features_" + version + ".csv")
 
 
-def engineer_and_save_features():
+def engineer_and_save_features(train=True):
     """ This method call feature engineering routine and saves results. """
 
-    full_data = pandas.read_csv(train_path)
-    labels = pandas.read_csv(train_labels_path)
+    if train:
+        full_data = pandas.read_csv(train_path)
+        labels = pandas.read_csv(train_labels_path)
+        addition = ""
+    else:
+        full_data = pandas.read_csv(test_path)
+        addition = "test/"
 
     data_with_nans = full_data.iloc[:, 3:]
 
     features = get_engineered_features(numpy.array(data_with_nans))
     features = pandas.DataFrame(features)
 
-    assert features.shape[0] == labels.shape[0]
-    # since the order in features was not changed, assign ids to features
-    features.insert(0, 'pid', labels['pid'])
+    if train:
+        assert features.shape[0] == labels.shape[0]
+        # since the order in features was not changed, assign ids to features
+        features.insert(0, 'pid', labels['pid'])
 
-    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/" + addition
     features.to_csv(path + "engineered_features_" + version + ".csv")
 
 
@@ -256,53 +269,144 @@ def generate_label_specific_features(features, labels):
     print("after:", positive_class_percent)
 
 
+def impute_and_scale_and_save_test_features(label, random_seed=777):
+    """ Impute and scale test set for each label """
+
+    path = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/'
+
+    if label in ['LABEL_AST', 'LABEL_Alkalinephos', 'LABEL_Sepsis', 'LABEL_RRate', 'LABEL_SpO2', 'LABEL_Heartrate']:
+        ending = 'flattened_features_v.0.0.37.csv'
+    else:
+        ending = 'engineered_features_v.0.0.37.csv'
+
+    data = pandas.read_csv(path + ending)
+
+    if label == 'LABEL_BaseExcess':
+        imputed_data = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_Fibrinogen':
+        imputed_data = SimpleImputer(strategy="constant").fit_transform(data)
+        scaled_data = StandardScaler().fit_transform(imputed_data)
+
+    elif label == 'LABEL_AST':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_Alkalinephos':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_Bilirubin_total':
+        imputed_data = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_Lactate':
+        imputed_data = IterativeImputer(initial_strategy="constant", random_state=random_seed).fit_transform(data)
+        scaled_data = StandardScaler().fit_transform(imputed_data)
+
+    elif label == 'LABEL_TroponinI':
+        imputed_data = SimpleImputer(strategy="most_frequent").fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_SaO2':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
+                                        add_indicator=True).fit_transform(data)
+        scaled_data = StandardScaler().fit_transform(imputed_data)
+
+    elif label == 'LABEL_Bilirubin_direct':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
+                                        add_indicator=True).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_EtCO2':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
+                                        add_indicator=True).fit_transform(data)
+        scaled_data = StandardScaler().fit_transform(imputed_data)
+
+    # subtask 2
+    elif label == 'LABEL_Sepsis':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
+                                        add_indicator=True).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    # subtask 3
+    elif label == 'LABEL_RRate':
+        imputed_data = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed).fit_transform(data)
+        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+
+    elif label == 'LABEL_ABPm':
+        imputed_data = SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)
+        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+
+    elif label == 'LABEL_SpO2':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
+                                        add_indicator=True).fit_transform(data)
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+    elif label == 'LABEL_Heartrate':
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
+                                        add_indicator=True).fit_transform(data)
+        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+
+    else:
+        raise ValueError("Unknown label!")
+
+    scaled_data = pandas.DataFrame(scaled_data)
+    scaled_data.to_csv(path + label + "_test_features_" + version + ".csv")
+
+
 if __name__ == "__main__":
 
-    """ Classification preprocessing pipeline.
+    """ Classification preprocessing pipeline. """
     
     # # STEP 0: engineer features
-    # engineer_and_save_features()
-    # flatten_and_save_features()
-    # 
+    # engineer_and_save_features(train=False)
+    # flatten_and_save_features(train=False)
+
     # # STEP 1: generate label-specific features by down-sampling over-represented negative class
-    # 
+    #
     # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
     # features = pandas.read_csv(features_path)
     # labels = pandas.read_csv(train_labels_path)
     #
     # # take engineered features with nans and
     # generate_label_specific_features(features, labels)
-    # 
-    # # STEP 2: impute label-specific features with different strategies
-    # 
-    # folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+    #
+    # STEP 2: impute label-specific features with different strategies
+    #
+    # folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/"
     # ending = "_flattened_v.0.0.31.csv"
-    # 
-    # impute them
-    # for label in subtask_2_labels:
+    #
+    # # impute them
+    # for label in subtask_1_labels:
     #     path = folder + label + ending
     #     print("imputing ", label, "...", sep="")
     #     impute_features_with_strategies_and_save(path)
     #     print("saved\n")
-
-    """
-
-    """ Regression setting: subtask 3 """
-
+    #
+    #
+    # """ Regression setting: subtask 3 """
+    #
     # # STEP 1: generate label-specific features by removing outliers
     # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/flattened_features_v.0.0.26.csv"
     # features = pandas.read_csv(features_path)
     # labels = pandas.read_csv(train_labels_path)
     #
     # generate_label_specific_features_for_regression(features, labels)
+    #
+    # # STEP 2: impute label-specific features with different strategies
+    # folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
+    # ending = "_flattened_v.0.0.37.csv"
+    #
+    # for i in trange(len(subtask_3_labels)):
+    #     path = folder + subtask_3_labels[i] + ending
+    #     print("imputing ", subtask_3_labels[i], "...", sep="")
+    #     impute_features_with_strategies_and_save(path)
+    #     print("saved\n")
 
-    # STEP 2: impute label-specific features with different strategies
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/label_specific/flattened/"
-    ending = "_flattened_v.0.0.37.csv"
+    """ Impute and scale features for test sets """
 
-    for i in trange(len(subtask_3_labels)):
-        path = folder + subtask_3_labels[i] + ending
-        print("imputing ", subtask_3_labels[i], "...", sep="")
-        impute_features_with_strategies_and_save(path)
-        print("saved\n")
+    for label in [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]:
+        impute_and_scale_and_save_test_features(label)
 
