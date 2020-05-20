@@ -169,9 +169,11 @@ def engineer_train_and_test_features_and_save():
 
     train_data = pandas.read_csv(train_path)
     test_data = pandas.read_csv(test_path)
-    labels = pandas.read_csv(train_labels_path)
 
+    train_labels = pandas.read_csv(train_labels_path)
     train_shape = train_data.shape[0] // 12
+
+    test_labels = test_data['pid'].values[::12]
 
     # stack train and test
     full_data = pandas.concat([train_data, test_data])
@@ -184,11 +186,11 @@ def engineer_train_and_test_features_and_save():
     train_features = all_features.iloc[:train_shape, :]
     test_features = all_features.iloc[train_shape:, :]
 
-    print("train_data", train_data.shape[0], "train_features", train_features.shape[0], "labels", labels.shape[0])
-
-    assert train_features.shape[0] == labels.shape[0]
+    assert train_features.shape[0] == train_labels.shape[0]
+    assert test_features.shape[0] == test_labels.shape[0]
     # since the order in features was not changed, assign ids to features
-    train_features.insert(0, 'pid', labels['pid'])
+    train_features.insert(0, 'pid', train_labels['pid'])
+    test_features.insert(0, 'pid', test_labels)
 
     path_to_save_train = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/"
     path_to_save_test = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/"
@@ -203,11 +205,13 @@ def flatten_test_and_train_features_and_save():
 
     train_data = pandas.read_csv(train_path)
     test_data = pandas.read_csv(test_path)
-    labels = pandas.read_csv(train_labels_path)
 
+    train_labels = pandas.read_csv(train_labels_path)
     train_shape = train_data.shape[0] // 12
 
-    full_data = pandas.concat(train_data, test_data)
+    test_labels = test_data['pid'].values[::12]
+
+    full_data = pandas.concat([train_data, test_data])
 
     data_with_nans = numpy.array(full_data.iloc[:, 2:])
 
@@ -231,9 +235,11 @@ def flatten_test_and_train_features_and_save():
     flattened_train = flattened_data.iloc[:train_shape, :]
     flattened_test = flattened_data.iloc[train_shape:, :]
 
-    assert flattened_train.shape[0] == labels.shape[0]
+    assert flattened_train.shape[0] == train_labels.shape[0]
+    assert flattened_test.shape[0] == test_labels.shape[0]
     # since the order in features was not changed, assign ids to features
-    flattened_train.insert(0, 'pid', labels['pid'])
+    flattened_train.insert(0, 'pid', train_labels['pid'])
+    flattened_test.insert(0, 'pid', test_labels)
 
     path_to_save_train = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/"
     path_to_save_test = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/"
@@ -486,6 +492,6 @@ if __name__ == "__main__":
 
     """ All preprocessing workflow for train and test together, to cope with add_indicator option while imputing. """
 
-    engineer_train_and_test_features_and_save()
-    # flatten_test_and_train_features_and_save()
+    # engineer_train_and_test_features_and_save()
+    flatten_test_and_train_features_and_save()
 
