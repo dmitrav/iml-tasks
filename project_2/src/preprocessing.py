@@ -163,6 +163,85 @@ def engineer_and_save_features(train=True):
     features.to_csv(path + "engineered_features_" + version + ".csv")
 
 
+def engineer_train_and_test_features_and_save():
+    """ This method does feature engineering on a merged dataset,
+        to guarantee the same dimensionality of the train and test data. """
+
+    train_data = pandas.read_csv(train_path)
+    test_data = pandas.read_csv(test_path)
+    labels = pandas.read_csv(train_labels_path)
+
+    train_shape = train_data.shape[0] // 12
+
+    # stack train and test
+    full_data = pandas.concat([train_data, test_data])
+
+    data_with_nans = full_data.iloc[:, 2:]
+
+    all_features = get_engineered_features(numpy.array(data_with_nans))
+    all_features = pandas.DataFrame(all_features)
+
+    train_features = all_features.iloc[:train_shape, :]
+    test_features = all_features.iloc[train_shape:, :]
+
+    print("train_data", train_data.shape[0], "train_features", train_features.shape[0], "labels", labels.shape[0])
+
+    assert train_features.shape[0] == labels.shape[0]
+    # since the order in features was not changed, assign ids to features
+    train_features.insert(0, 'pid', labels['pid'])
+
+    path_to_save_train = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/"
+    path_to_save_test = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/"
+
+    train_features.to_csv(path_to_save_train + "engineered_train_" + version + ".csv")
+    test_features.to_csv(path_to_save_test + "engineered_test_" + version + ".csv")
+
+
+def flatten_test_and_train_features_and_save():
+    """ This method does flattening on a merged dataset,
+        to guarantee the same dimensionality of the train and test data. """
+
+    train_data = pandas.read_csv(train_path)
+    test_data = pandas.read_csv(test_path)
+    labels = pandas.read_csv(train_labels_path)
+
+    train_shape = train_data.shape[0] // 12
+
+    full_data = pandas.concat(train_data, test_data)
+
+    data_with_nans = numpy.array(full_data.iloc[:, 2:])
+
+    new_dataset = [[[] for x in range(data_with_nans.shape[1])] for x in range(data_with_nans.shape[0] // 12)]
+
+    for j in range(data_with_nans.shape[1]):
+        for i in range(data_with_nans.shape[0] // 12):
+            patient_records = data_with_nans[i * 12:(i + 1) * 12, j]
+            new_dataset[i][j].extend(patient_records.tolist())
+
+    # reshape data structure to a matrix
+    flattened = []
+    for i in range(len(new_dataset)):
+        patient_features = []
+        for j in range(len(new_dataset[i])):
+            patient_features.extend(new_dataset[i][j])
+        flattened.append(patient_features)
+
+    flattened_data = pandas.DataFrame(flattened)
+
+    flattened_train = flattened_data.iloc[:train_shape, :]
+    flattened_test = flattened_data.iloc[train_shape:, :]
+
+    assert flattened_train.shape[0] == labels.shape[0]
+    # since the order in features was not changed, assign ids to features
+    flattened_train.insert(0, 'pid', labels['pid'])
+
+    path_to_save_train = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/"
+    path_to_save_test = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/"
+
+    flattened_train.to_csv(path_to_save_train + "flattened_train_" + version + ".csv")
+    flattened_test.to_csv(path_to_save_test + "flattened_test_" + version + ".csv")
+
+
 def impute_features_with_strategies_and_save(path):
     """ Impute features and save datasets. """
 
@@ -270,7 +349,8 @@ def generate_label_specific_features(features, labels):
 
 
 def impute_and_scale_and_save_test_features(label, random_seed=777):
-    """ Impute and scale test set for each label """
+    """ Impute and scale test set for each label:
+        works ONLY for add_indicator=False. """
 
     path = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/'
 
@@ -290,11 +370,11 @@ def impute_and_scale_and_save_test_features(label, random_seed=777):
         scaled_data = StandardScaler().fit_transform(imputed_data)
 
     elif label == 'LABEL_AST':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
     elif label == 'LABEL_Alkalinephos':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
     elif label == 'LABEL_Bilirubin_total':
@@ -310,24 +390,20 @@ def impute_and_scale_and_save_test_features(label, random_seed=777):
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
     elif label == 'LABEL_SaO2':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
-                                        add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = StandardScaler().fit_transform(imputed_data)
 
     elif label == 'LABEL_Bilirubin_direct':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
-                                        add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
     elif label == 'LABEL_EtCO2':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
-                                        add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = StandardScaler().fit_transform(imputed_data)
 
     # subtask 2
     elif label == 'LABEL_Sepsis':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
-                                        add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
     # subtask 3
@@ -340,13 +416,11 @@ def impute_and_scale_and_save_test_features(label, random_seed=777):
         scaled_data = MinMaxScaler().fit_transform(imputed_data)
 
     elif label == 'LABEL_SpO2':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
-                                        add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
     elif label == 'LABEL_Heartrate':
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed,
-                                        add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
         scaled_data = MinMaxScaler().fit_transform(imputed_data)
 
     else:
@@ -407,6 +481,11 @@ if __name__ == "__main__":
 
     """ Impute and scale features for test sets """
 
-    for label in [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]:
-        impute_and_scale_and_save_test_features(label)
+    # for label in [*subtask_1_labels, *subtask_3_labels]:
+    #     impute_and_scale_and_save_test_features(label)
+
+    """ All preprocessing workflow for train and test together, to cope with add_indicator option while imputing. """
+
+    engineer_train_and_test_features_and_save()
+    # flatten_test_and_train_features_and_save()
 

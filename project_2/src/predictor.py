@@ -480,7 +480,7 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Fibrinogen_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_AST_test_features_v.0.0.37.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
