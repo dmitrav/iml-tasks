@@ -173,7 +173,7 @@ def engineer_train_and_test_features_and_save():
     train_labels = pandas.read_csv(train_labels_path)
     train_shape = train_data.shape[0] // 12
 
-    test_labels = test_data['pid'].values[::12]
+    test_labels = test_data['pid'].unique()
 
     # stack train and test
     full_data = pandas.concat([train_data, test_data], sort=False)
@@ -271,7 +271,13 @@ def impute_features_with_strategies_and_save(path):
 def generate_label_specific_features_for_regression(features, labels):
     """ This is for subtask 3. Some filtering is done for each label. """
 
-    for label in ["LABEL_ABPm"]:
+    # should habe ENGINEERED features as input
+    labels_to_process = ["LABEL_ABPm"]
+
+    # should habe FLATTENED features as input
+    labels_to_process = ["LABEL_RRate", 'LABEL_SpO2', 'LABEL_Heartrate']
+
+    for label in labels_to_process:
 
         # hardcoded interval of normal values, based on distribution plots
         if "RRate" in label:
@@ -295,7 +301,7 @@ def generate_label_specific_features_for_regression(features, labels):
         print("size after:", normal_features.shape[0])
 
         path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/"
-        normal_features.to_csv(path + label + "_engineered_" + version + ".csv")
+        normal_features.to_csv(path + label + "_flattened_" + version + ".csv")
 
         print(label, ": dataset saved", sep="")
 
@@ -305,12 +311,22 @@ def generate_label_specific_features(features, labels):
         performs filtering of patients with high percent of nans for each label separately
         (to decrease imbalance in data), and saves the resulting datasets. """
 
+    # SUBTASK 1, should have ENGINEERED features as input
+    labels_to_process = ['LABEL_BaseExcess', 'LABEL_Fibrinogen', 'LABEL_Bilirubin_total', 'LABEL_Lactate',
+                         'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
+
+    # SUBTASK 1, should have FLATTENED features as input
+    labels_to_process = ['LABEL_AST', 'LABEL_Alkalinephos']
+
+    # SUBTASK 2, should have FLATTENED features as input
+    labels_to_process = ['LABEL_Sepsis']
+
     # check how imbalanced labels are initially
-    initial_positive_class_percent = numpy.sum(labels.loc[:, subtask_1_labels], 0) / labels.shape[0] * 100
+    initial_positive_class_percent = numpy.sum(labels.loc[:, labels_to_process], 0) / labels.shape[0] * 100
 
     positive_class_percent = []
 
-    for label in ['LABEL_EtCO2', 'LABEL_Bilirubin_direct', 'LABEL_SaO2']:
+    for label in labels_to_process:
 
         # get pid of patients that are of negative and positive classes
         negative_class_pid = labels.loc[labels.loc[:, label] == 0, "pid"]
@@ -323,13 +339,13 @@ def generate_label_specific_features(features, labels):
 
         # among those, get pid of patients that have >= certain % of nans
         if initial_positive_class_percent[label] < 20:
-            # percent = 0.265  # Sepsis: flattened features -> results in 25% of the positive class
+            percent = 0.27  # Sepsis: flattened features -> results in 25% of the positive class
             # percent = 0.8  # Sepsis: engineered features -> results in 25% of the positive class
-            percent = 0.75  # for engineered features
+            # percent = 0.75  # for engineered features
             # percent = 0.28  # for flattened features
         else:
-            percent = 0.5  # for engineered features
-            # percent = 0.15  # for flattened features
+            # percent = 0.5  # for engineered features
+            percent = 0.15  # for flattened features
 
         low_percent_finite_values_pid = negative_class_features.loc[numpy.sum(numpy.isfinite(negative_class_features.iloc[:, 1:]), 1) / negative_class_features.shape[1] >= percent, "pid"]
 
@@ -345,7 +361,7 @@ def generate_label_specific_features(features, labels):
         positive_class_percent.append(numpy.sum(new_labels.loc[:, label], 0) / new_labels.shape[0] * 100)
 
         path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/"
-        new_features.to_csv(path + label + "_engineered_" + version + ".csv")
+        new_features.to_csv(path + label + "_flattened_" + version + ".csv")
 
         print(label, ": dataset saved\n", sep="")
 
@@ -359,9 +375,49 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     engineered_test_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/engineered_test_v.0.0.45.csv"
     flattened_test_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/flattened_test_v.0.0.45.csv"
 
-    if label == 'LABEL_AST':
+    if label == 'LABEL_BaseExcess':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_flattened_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_BaseExcess_engineered_v.0.0.46.csv")
+        train_data = train_data.drop(train_data.columns[0], axis=1)
+        test_data = pandas.read_csv(engineered_test_path)
+
+        train_shape = train_data.shape[0]
+
+        assert train_data.shape[1] == test_data.shape[1]
+        data = pandas.concat([train_data, test_data], sort=False)
+
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+        train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
+        test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
+
+    elif label == 'LABEL_Fibrinogen':
+
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Fibrinogen_engineered_v.0.0.46.csv")
+        train_data = train_data.drop(train_data.columns[0], axis=1)
+        test_data = pandas.read_csv(engineered_test_path)
+
+        train_shape = train_data.shape[0]
+
+        assert train_data.shape[1] == test_data.shape[1]
+        data = pandas.concat([train_data, test_data], sort=False)
+
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+        train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
+        test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
+
+    elif label == 'LABEL_AST':
+
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_flattened_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
 
@@ -370,15 +426,18 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     elif label == 'LABEL_Alkalinephos':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_flattened_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_flattened_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
 
@@ -387,15 +446,78 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
+
+    elif label == 'LABEL_Bilirubin_total':
+
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_total_engineered_v.0.0.46.csv")
+        train_data = train_data.drop(train_data.columns[0], axis=1)
+        test_data = pandas.read_csv(engineered_test_path)
+
+        train_shape = train_data.shape[0]
+
+        assert train_data.shape[1] == test_data.shape[1]
+        data = pandas.concat([train_data, test_data], sort=False)
+
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+        train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
+        test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
+
+    elif label == 'LABEL_Lactate':
+
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Lactate_engineered_v.0.0.46.csv")
+        train_data = train_data.drop(train_data.columns[0], axis=1)
+        test_data = pandas.read_csv(engineered_test_path)
+
+        train_shape = train_data.shape[0]
+
+        assert train_data.shape[1] == test_data.shape[1]
+        data = pandas.concat([train_data, test_data], sort=False)
+
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+        train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
+        test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
+
+    elif label == 'LABEL_TroponinI':
+
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_TroponinI_engineered_v.0.0.46.csv")
+        train_data = train_data.drop(train_data.columns[0], axis=1)
+        test_data = pandas.read_csv(engineered_test_path)
+
+        train_shape = train_data.shape[0]
+
+        assert train_data.shape[1] == test_data.shape[1]
+        data = pandas.concat([train_data, test_data], sort=False)
+
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
+        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+
+        train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
+        test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     elif label == 'LABEL_SaO2':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_engineered_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_engineered_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
 
@@ -404,15 +526,18 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = StandardScaler().fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     elif label == 'LABEL_Bilirubin_direct':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_engineered_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_engineered_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
 
@@ -421,15 +546,18 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     elif label == 'LABEL_EtCO2':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_engineered_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_engineered_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
 
@@ -438,16 +566,19 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = StandardScaler().fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     # subtask 2
     elif label == 'LABEL_Sepsis':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_flattened_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_flattened_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
 
@@ -456,16 +587,39 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     # subtask 3
+    elif label == 'LABEL_RRate':
+
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_RRate_flattened_v.0.0.46.csv")
+        train_data = train_data.drop(train_data.columns[0], axis=1)
+        test_data = pandas.read_csv(flattened_test_path)
+
+        train_shape = train_data.shape[0]
+
+        assert train_data.shape[1] == test_data.shape[1]
+        data = pandas.concat([train_data, test_data], sort=False)
+
+        imputed_data = SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data.iloc[:, 2:])
+        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+
+        train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
+        test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
+
     elif label == 'LABEL_ABPm':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_engineered_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_engineered_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
 
@@ -474,15 +628,18 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data)
+        imputed_data = SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = MinMaxScaler().fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     elif label == 'LABEL_SpO2':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_flattened_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_flattened_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
 
@@ -491,15 +648,18 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     elif label == 'LABEL_Heartrate':
 
-        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_flattened_v.0.0.45.csv")
+        train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_flattened_v.0.0.46.csv")
         train_data = train_data.drop(train_data.columns[0], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
 
@@ -508,11 +668,14 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data)
+        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
         scaled_data = MinMaxScaler().fit_transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
+        train_features.insert(0, 'pid', data['pid'].values[:train_shape])
+
         test_features = pandas.DataFrame(scaled_data).iloc[train_shape:, :]
+        test_features.insert(0, 'pid', data['pid'].values[train_shape:])
 
     else:
         raise ValueError("Unknown label!")
@@ -632,7 +795,7 @@ if __name__ == "__main__":
 
     # CLASSIFICATION
 
-    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/engineered_train_v.0.0.45.csv"
+    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/flattened_train_v.0.0.45.csv"
     # features = pandas.read_csv(features_path)
     # labels = pandas.read_csv(train_labels_path)
     #
@@ -641,15 +804,14 @@ if __name__ == "__main__":
 
     # REGRESSION
 
-    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/engineered_train_v.0.0.45.csv"
+    # features_path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/flattened_train_v.0.0.45.csv"
     # features = pandas.read_csv(features_path)
     # labels = pandas.read_csv(train_labels_path)
     #
     # generate_label_specific_features_for_regression(features, labels)
 
     # STEP 2: impute label-specific features with different strategies
-    labels_to_impute = ['LABEL_AST', 'LABEL_Alkalinephos', 'LABEL_SaO2', 'LABEL_Bilirubin_direct',
-                        'LABEL_EtCO2', 'LABEL_Sepsis', 'LABEL_ABPm', 'LABEL_SpO2', 'LABEL_Heartrate']
+    labels_to_impute = [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]
 
     for i in trange(len(labels_to_impute)):
 

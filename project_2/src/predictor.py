@@ -1,7 +1,7 @@
 
 import pandas, numpy, time, json, warnings, multiprocessing
 from project_2.src import preprocessing
-from project_2.src.constants import train_path, train_labels_path
+from project_2.src.constants import train_path, train_labels_path, test_path
 from project_2.src.constants import subtask_1_labels, subtask_2_labels, subtask_3_labels, version
 from project_2.src.constants import version
 from sklearn.model_selection import KFold
