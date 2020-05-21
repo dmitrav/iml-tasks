@@ -430,288 +430,311 @@ def train_model_and_predict_on_test(label):
 
     if label == 'LABEL_BaseExcess':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_BaseExcess_impute_iter_most_freq_v.0.0.25.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_BaseExcess_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_BaseExcess_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_BaseExcess_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_Fibrinogen':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Fibrinogen_impute_simple_const_v.0.0.25.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Fibrinogen_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = StandardScaler().fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.01, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Fibrinogen_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Fibrinogen_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_AST':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = StandardScaler().fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_AST_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_AST_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_Alkalinephos':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Alkalinephos_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Alkalinephos_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_Bilirubin_total':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_total_impute_iter_most_freq_v.0.0.25.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_total_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_total_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_Lactate':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Lactate_impute_iter_const_v.0.0.25.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Lactate_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = StandardScaler().fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Lactate_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Lactate_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_TroponinI':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_TroponinI_impute_simple_most_freq_v.0.0.25.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_TroponinI_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_TroponinI_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_TroponinI_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
 
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
+
     elif label == 'LABEL_SaO2':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = StandardScaler().fit_transform(train_data.iloc[:,2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.01, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SaO2_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SaO2_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_Bilirubin_direct':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:,2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_direct_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_direct_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_EtCO2':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = StandardScaler().fit_transform(train_data.iloc[:, 2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_EtCO2_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_EtCO2_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     # subtask 2
     elif label == 'LABEL_Sepsis':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:,2:])
 
         resampler = SMOTETomek(random_state=42)
-        X_resampled, y_resampled = resampler.fit_resample(scaled_data, labels[label])
+        X_resampled, y_resampled = resampler.fit_resample(train_data.iloc[:, 2:], labels[label])
 
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Sepsis_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Sepsis_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
 
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
+
     # subtask 3
     elif label == 'LABEL_RRate':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_RRate_impute_iter_most_freq_v.0.0.37.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_RRate_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = MinMaxScaler().fit_transform(train_data.iloc[:,2:])
 
         model = linear_model.Ridge(alpha=10, random_state=415)
-        model.fit(scaled_data, labels[label])
+        model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_RRate_test_features_v.0.0.37.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_RRate_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_ABPm':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = MinMaxScaler().fit_transform(train_data.iloc[:, 2:])
 
         model = linear_model.Lasso(alpha=0.0005, random_state=415)
-        model.fit(scaled_data, labels[label])
+        model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_ABPm_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_ABPm_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_SpO2':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(train_data.iloc[:, 2:])
 
         model = linear_model.Lasso(alpha=0.01, random_state=415)
-        model.fit(scaled_data, labels[label])
+        model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SpO2_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SpO2_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
+
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
 
     elif label == 'LABEL_Heartrate':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_train_imputed_v.0.0.45.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
-        scaled_data = MinMaxScaler().fit_transform(train_data.iloc[:, 2:])
 
         model = linear_model.Lasso(alpha=0.01, random_state=415)
-        model.fit(scaled_data, labels[label])
+        model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Heartrate_test_imputed_v.0.0.45.csv'
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Heartrate_test_imputed_v.0.0.46.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
 
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_data['pid'].values)
+
     else:
         raise ValueError("Unknown label!")
-
-    predictions = pandas.DataFrame(predictions)
-
-    test_data = pandas.read_csv(test_path)
-    test_labels = test_data['pid'].values[::12]
-
-    predictions.insert(0, 'pid', test_labels)
 
     return predictions
 
