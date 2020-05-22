@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
+import pandas, numpy
 import sklearn.metrics as metrics
+from project_2.src.constants import subtask_1_labels, subtask_2_labels, subtask_3_labels
+from project_2.src.constants import version
 
 VITALS = ['LABEL_RRate', 'LABEL_ABPm', 'LABEL_SpO2', 'LABEL_Heartrate']
 TESTS = ['LABEL_BaseExcess', 'LABEL_Fibrinogen', 'LABEL_AST', 'LABEL_Alkalinephos', 'LABEL_Bilirubin_total',
@@ -20,13 +21,38 @@ def get_score(df_true, df_submission):
     return score
 
 
-filename = 'sample.zip'
-df_submission = pd.read_csv(filename)
+def example():
 
-# generate a baseline based on sample.zip
-df_true = pd.read_csv(filename)
-for label in TESTS + ['LABEL_Sepsis']:
-    # round classification labels
-    df_true[label] = np.around(df_true[label].values)
+    filename = 'sample.zip'
+    df_submission = pd.read_csv(filename)
 
-print('Score of sample.zip with itself as groundtruth', get_score(df_true, df_submission))
+    # generate a baseline based on sample.zip
+    df_true = pd.read_csv(filename)
+    for label in TESTS + ['LABEL_Sepsis']:
+        # round classification labels
+        df_true[label] = np.around(df_true[label].values)
+
+    print('Score of sample.zip with itself as groundtruth', get_score(df_true, df_submission))
+
+
+if __name__ == "__main__":
+
+    path_to_predictions = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/"
+    path_to_test_features = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/engineered_test_v.0.0.45.csv"
+
+    test_pid = pandas.read_csv(path_to_test_features)['pid']
+
+    all_labels = [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]
+
+    submission = pandas.DataFrame({'pid': test_pid})
+
+    for label in all_labels:
+
+        path = path_to_predictions + "predictions_" + label + "_v.0.0.46.csv"
+        label_prediction = pandas.read_csv(path)
+        submission[label] = label_prediction.iloc[:, 2]
+
+    submission.to_csv(path_to_predictions + 'prediction_' + version + '.zip', index=False, float_format='%.3f', compression='zip')
+
+
+

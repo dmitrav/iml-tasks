@@ -514,7 +514,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Bilirubin_total':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_total_train_imputed_v.0.0.46.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -783,7 +783,10 @@ if __name__ == "__main__":
     start_time = time.time()
 
     path_to_save_to = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/"
-    all_labels = [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]
+
+    the_rest_of_subtask_1= ['LABEL_Bilirubin_total', 'LABEL_Lactate', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
+
+    all_labels = [*the_rest_of_subtask_1, *subtask_2_labels, *subtask_3_labels]
 
     for j in trange(len(all_labels)):
 
