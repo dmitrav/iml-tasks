@@ -396,7 +396,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -426,7 +426,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -456,7 +456,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -486,7 +486,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -516,7 +516,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -546,7 +546,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -576,7 +576,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -606,7 +606,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -636,7 +636,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -666,7 +666,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -697,7 +697,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -728,7 +728,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = MinMaxScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -758,7 +758,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = MinMaxScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -788,7 +788,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
@@ -818,7 +818,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         scaler = MinMaxScaler()
         # fit scaler only on imputed train data
-        scaler.fit(imputed_data.iloc[:train_shape, :])
+        scaler.fit(imputed_data[:train_shape, :])
         # scale train and test together
         scaled_data = scaler.transform(imputed_data)
 
