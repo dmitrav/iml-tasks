@@ -378,8 +378,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     if label == 'LABEL_BaseExcess':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_BaseExcess_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -389,9 +390,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:,2:])
+        imputer.fit(train_data.iloc[:,1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -408,8 +409,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Fibrinogen':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Fibrinogen_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -418,9 +420,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = SimpleImputer(strategy="const")
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
@@ -437,8 +439,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_AST':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_flattened_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -447,9 +450,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
@@ -466,8 +469,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Alkalinephos':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_flattened_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -476,9 +480,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -495,8 +499,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Bilirubin_total':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_total_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -505,9 +510,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -524,8 +529,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Lactate':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Lactate_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -534,9 +540,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="const", random_state=random_seed)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
@@ -553,8 +559,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_TroponinI':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_TroponinI_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -563,9 +570,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = SimpleImputer(strategy="most_frequent")
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -582,8 +589,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_SaO2':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -592,9 +600,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="most_freq", random_state=random_seed)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -611,8 +619,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Bilirubin_direct':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -621,9 +630,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -640,8 +649,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_EtCO2':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -650,9 +660,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = StandardScaler()
         # fit scaler only on imputed train data
@@ -670,8 +680,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Sepsis':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_flattened_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -680,9 +691,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -700,8 +711,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_RRate':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_RRate_flattened_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -710,9 +722,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = MinMaxScaler()
         # fit scaler only on imputed train data
@@ -729,8 +741,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_ABPm':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_engineered_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(engineered_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -739,9 +752,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = SimpleImputer(strategy="constant", add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = MinMaxScaler()
         # fit scaler only on imputed train data
@@ -758,8 +771,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_SpO2':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_flattened_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -768,9 +782,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = PowerTransformer(method='yeo-johnson')
         # fit scaler only on imputed train data
@@ -787,8 +801,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
     elif label == 'LABEL_Heartrate':
 
         train_data = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_flattened_v.0.0.46.csv")
-        train_data = train_data.drop(train_data.columns[0], axis=1)
+        train_data = train_data.drop(train_data.columns[0:2], axis=1)
         test_data = pandas.read_csv(flattened_test_path)
+        test_data = test_data.drop(test_data.columns[0], axis=1)
 
         train_shape = train_data.shape[0]
 
@@ -797,9 +812,9 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
         # fit imputer only on train data
-        imputer.fit(train_data.iloc[:, 2:])
+        imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
-        imputed_data = imputer.transform(data.iloc[:, 2:])
+        imputed_data = imputer.transform(data.iloc[:, 1:])
 
         scaler = MinMaxScaler()
         # fit scaler only on imputed train data
