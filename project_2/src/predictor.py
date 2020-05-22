@@ -428,9 +428,13 @@ def train_model_and_predict_on_test(label):
 
     labels = pandas.read_csv(train_labels_path)
 
+    cv = KFold(n_splits=10, shuffle=True, random_state=42)
+    classification_scoring = {'accuracy': 'accuracy', 'precision': 'precision', 'recall': 'recall', 'roc_auc': 'roc_auc', 'f1': 'f1'}
+    regression_scoring = {'max_error': 'max_error', 'neg_mean_squared': 'neg_mean_squared_error', 'neg_median_absolute': 'neg_median_absolute_error', 'r2': 'r2'}
+
     if label == 'LABEL_BaseExcess':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_BaseExcess_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_BaseExcess_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -441,7 +445,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_BaseExcess_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_BaseExcess_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -451,7 +461,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Fibrinogen':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Fibrinogen_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Fibrinogen_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -462,7 +472,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.01, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Fibrinogen_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Fibrinogen_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -472,7 +488,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_AST':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_AST_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -483,7 +499,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_AST_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_AST_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -493,7 +515,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Alkalinephos':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Alkalinephos_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -504,7 +526,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Alkalinephos_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Alkalinephos_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -514,7 +542,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Bilirubin_total':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_total_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_total_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -525,7 +553,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_total_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_total_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -535,7 +569,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Lactate':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Lactate_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Lactate_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -546,7 +580,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Lactate_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Lactate_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -556,7 +596,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_TroponinI':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_TroponinI_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_TroponinI_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -567,7 +607,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_TroponinI_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_TroponinI_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -577,7 +623,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_SaO2':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SaO2_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -588,7 +634,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.01, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SaO2_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SaO2_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -598,7 +650,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Bilirubin_direct':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Bilirubin_direct_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -609,7 +661,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_direct_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Bilirubin_direct_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -619,7 +677,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_EtCO2':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_EtCO2_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -630,7 +688,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_EtCO2_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_EtCO2_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -641,7 +705,7 @@ def train_model_and_predict_on_test(label):
     # subtask 2
     elif label == 'LABEL_Sepsis':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Sepsis_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -652,7 +716,13 @@ def train_model_and_predict_on_test(label):
         model = SVC(C=0.1, kernel="sigmoid", random_state=42, probability=True)
         model.fit(X_resampled, y_resampled)
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Sepsis_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, X_resampled, y_resampled, cv=cv, scoring=classification_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in classification_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Sepsis_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict_proba(test_data.iloc[:, 2:])
@@ -663,7 +733,7 @@ def train_model_and_predict_on_test(label):
     # subtask 3
     elif label == 'LABEL_RRate':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_RRate_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_RRate_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -671,7 +741,13 @@ def train_model_and_predict_on_test(label):
         model = linear_model.Ridge(alpha=10, random_state=415)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_RRate_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in regression_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_RRate_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
@@ -681,7 +757,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_ABPm':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_ABPm_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -689,7 +765,13 @@ def train_model_and_predict_on_test(label):
         model = linear_model.Lasso(alpha=0.0005, random_state=415)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_ABPm_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in regression_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_ABPm_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
@@ -699,7 +781,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_SpO2':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_SpO2_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -707,7 +789,13 @@ def train_model_and_predict_on_test(label):
         model = linear_model.Lasso(alpha=0.01, random_state=415)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SpO2_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in regression_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_SpO2_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
@@ -717,7 +805,7 @@ def train_model_and_predict_on_test(label):
 
     elif label == 'LABEL_Heartrate':
 
-        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_train_imputed_v.0.0.46.csv'
+        path_to_train = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train/LABEL_Heartrate_train_imputed_v.0.0.47.csv'
         train_data = pandas.read_csv(path_to_train)
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
@@ -725,7 +813,13 @@ def train_model_and_predict_on_test(label):
         model = linear_model.Lasso(alpha=0.01, random_state=415)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
-        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Heartrate_test_imputed_v.0.0.46.csv'
+        scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
+        print("Model for", label, "scored on 10-fold CV with:")
+        for key in regression_scoring.keys():
+            print(key, "=", scores["test_" + key])
+        print()
+
+        path_to_test = '/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/LABEL_Heartrate_test_imputed_v.0.0.47.csv'
         test_data = pandas.read_csv(path_to_test)
 
         predictions = model.predict(test_data.iloc[:, 2:])
@@ -784,9 +878,9 @@ if __name__ == "__main__":
 
     path_to_save_to = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/"
 
-    the_rest_of_subtask_1= ['LABEL_Bilirubin_total', 'LABEL_Lactate', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
+    # the_rest_of_subtask_1= ['LABEL_Bilirubin_total', 'LABEL_Lactate', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
 
-    all_labels = [*the_rest_of_subtask_1, *subtask_2_labels, *subtask_3_labels]
+    all_labels = [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]
 
     for j in trange(len(all_labels)):
 

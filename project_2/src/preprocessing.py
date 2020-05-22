@@ -383,11 +383,21 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
 
         train_shape = train_data.shape[0]
 
+        # combine train and test
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:,2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -406,8 +416,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = SimpleImputer(strategy="const")
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = StandardScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -426,8 +445,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = StandardScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -446,8 +474,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -466,8 +503,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -486,8 +532,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="const", random_state=random_seed)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = StandardScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -506,8 +561,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = SimpleImputer(strategy="most_frequent")
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -526,8 +590,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = StandardScaler().fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="most_freq", random_state=random_seed)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -546,8 +619,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -566,8 +648,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = StandardScaler().fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = StandardScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -587,8 +678,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -608,8 +708,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = MinMaxScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -628,8 +737,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = SimpleImputer(strategy="constant", add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+        imputer = SimpleImputer(strategy="constant", add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = MinMaxScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -648,8 +766,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = PowerTransformer(method='yeo-johnson').fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = PowerTransformer(method='yeo-johnson')
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
@@ -668,8 +795,17 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputed_data = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True).fit_transform(data.iloc[:, 2:])
-        scaled_data = MinMaxScaler().fit_transform(imputed_data)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        # fit imputer only on train data
+        imputer.fit(train_data.iloc[:, 2:])
+        # impute train and test together
+        imputed_data = imputer.transform(data.iloc[:, 2:])
+
+        scaler = MinMaxScaler()
+        # fit scaler only on imputed train data
+        scaler.fit(imputed_data.iloc[:train_shape, :])
+        # scale train and test together
+        scaled_data = scaler.transform(imputed_data)
 
         train_features = pandas.DataFrame(scaled_data).iloc[:train_shape, :]
         train_features.insert(0, 'pid', data['pid'].values[:train_shape])
