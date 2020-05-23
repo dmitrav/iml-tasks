@@ -418,7 +418,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputer = SimpleImputer(strategy="const")
+        imputer = SimpleImputer(strategy="constant")
         # fit imputer only on train data
         imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
@@ -538,7 +538,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputer = IterativeImputer(initial_strategy="const", random_state=random_seed)
+        imputer = IterativeImputer(initial_strategy="constant", random_state=random_seed)
         # fit imputer only on train data
         imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
@@ -598,7 +598,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputer = IterativeImputer(initial_strategy="most_freq", random_state=random_seed)
+        imputer = IterativeImputer(initial_strategy="most_frequent", random_state=random_seed)
         # fit imputer only on train data
         imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
@@ -780,7 +780,7 @@ def impute_and_scale_train_and_test_features_and_save(label, random_seed=777):
         assert train_data.shape[1] == test_data.shape[1]
         data = pandas.concat([train_data, test_data], sort=False)
 
-        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, add_indicator=True)
+        imputer = IterativeImputer(initial_strategy="mean", random_state=random_seed, tol=0.35, add_indicator=True, verbose=2)
         # fit imputer only on train data
         imputer.fit(train_data.iloc[:, 1:])
         # impute train and test together
@@ -962,7 +962,11 @@ if __name__ == "__main__":
     # generate_label_specific_features_for_regression(features, labels)
 
     # STEP 2: impute label-specific features with different strategies
-    labels_to_impute = [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]
+
+    # the_rest_of_subtask_1 = ['LABEL_Fibrinogen', 'LABEL_AST', 'LABEL_Alkalinephos', 'LABEL_Bilirubin_total', 'LABEL_Lactate', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
+    the_rest_of_subtask_3 = ['LABEL_SpO2']
+
+    labels_to_impute = [*the_rest_of_subtask_3]
 
     for i in trange(len(labels_to_impute)):
 

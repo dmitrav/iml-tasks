@@ -149,11 +149,11 @@ def find_best_regression_models_from_run():
     """ This method sorts methods for each label by sum of all metrics,
         and prints scores for 10 best models for each label. """
 
-    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/subtask_3/"
+    folder = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/subtask_3/run_6/"
 
-    for label in subtask_3_labels:
+    for label in ['LABEL_SpO2']:
 
-        results_file = "results_flattened_" + label + "_impute_iter_most_freq_v.0.0.37.json"
+        results_file = "results_flattened_" + label + "_impute_iter_mean_v.0.0.37.json"
         with open(folder + results_file, 'r') as file:
             results = json.load(file)
 

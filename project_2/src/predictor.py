@@ -880,7 +880,7 @@ if __name__ == "__main__":
 
     # the_rest_of_subtask_1= ['LABEL_Bilirubin_total', 'LABEL_Lactate', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
 
-    all_labels = [*subtask_1_labels, *subtask_2_labels, *subtask_3_labels]
+    all_labels = [*subtask_1_labels, *subtask_2_labels]
 
     for j in trange(len(all_labels)):
 
