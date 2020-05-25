@@ -1028,10 +1028,92 @@ def impute_train_and_test_for_each_patient():
     print("test imputed and saved")
 
 
+def engineer_features(dataset):
+
+    patient_ages = dataset[:, 2][::12]
+
+    # create an empty array for every feature of every patient
+    new_dataset = [[[] for x in range(3, dataset.shape[1])] for x in range(dataset.shape[0] // 12)]
+
+    for j in range(dataset.shape[1]-3):
+        for i in range(dataset.shape[0] // 12):
+
+            patient_records = dataset[i * 12:(i + 1) * 12, j+3]
+            non_zero_records = patient_records[patient_records != 0]
+
+            if non_zero_records.shape[0] == 2:
+                fit_linear, fit_intercept = numpy.polyfit([x for x in range(1, patient_records.shape[0] + 1)], patient_records, 1)
+                fit_quadratic, fit_cubic = 0., 0.
+
+            elif non_zero_records.shape[0] == 3:
+                fit_quadratic, fit_linear, fit_intercept = numpy.polyfit([x for x in range(1, patient_records.shape[0] + 1)], patient_records, 2)
+                fit_cubic = 0
+
+            elif non_zero_records.shape[0] >= 4:
+                fit_cubic, fit_quadratic, fit_linear, fit_intercept = numpy.polyfit([x for x in range(1, patient_records.shape[0] + 1)], patient_records, 3)
+
+            else:
+                fit_cubic, fit_quadratic, fit_linear, fit_intercept = 0., 0., 0., 0.
+
+            # collect new features
+            new_features = [
+                numpy.percentile(patient_records, 5),
+                numpy.percentile(patient_records, 25),
+                numpy.mean(patient_records),
+                numpy.percentile(patient_records, 75),
+                numpy.percentile(patient_records, 95),
+                numpy.std(patient_records),
+                non_zero_records.shape[0],  # number of non-zero values
+                numpy.sum(patient_records),  # "auc"
+                fit_intercept,
+                fit_linear,
+                fit_quadratic,
+                fit_cubic,
+            ]
+
+            try:
+                new_dataset[i][j].extend(new_features)
+            except:
+                print("i=", i, "j=", j)
+                print("max_i=", len(new_dataset))
+                print("max_j=", len(new_dataset[0]))
+
+    assert len(new_dataset) == patient_ages.shape[0]
+
+    # reshape data structure to a matrix
+    flattened = []
+    for i in range(len(new_dataset)):
+        # create empty list and add age to it
+        patient_features = [patient_ages[i]]
+        for j in range(len(new_dataset[i])):
+            patient_features.extend(new_dataset[i][j])
+        flattened.append(patient_features)
+
+    return numpy.array(flattened)
+
+
+def get_engineered_features_for_imputed_data():
+    """ New method of engineering features after imputation. """
+
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+
+    train_imputed = pandas.read_csv(path + "train_features_imputed_v.0.1.0.csv", index_col=0)
+    train_features = engineer_features(numpy.array(train_imputed))
+    train_features = pandas.DataFrame(train_features)
+    train_features.insert(0, 'pid', train_imputed['pid'].values[::12])
+    train_features.to_csv(path + "train_features_imputed_engineered_" + version + ".csv", index=False)
+
+    test_imputed = pandas.read_csv(path + "test_features_imputed_v.0.1.0.csv", index_col=0)
+    test_features = engineer_features(numpy.array(test_imputed))
+    test_features = pandas.DataFrame(test_features)
+    test_features.insert(0, 'pid', test_imputed['pid'].values[::12])
+    test_features.to_csv(path + "test_features_imputed_engineered_" + version + ".csv", index=False)
+
+
 if __name__ == "__main__":
 
-    impute_train_and_test_for_each_patient()
-
+    # impute_train_and_test_for_each_patient()
+    get_engineered_features_for_imputed_data()
 
 
 
