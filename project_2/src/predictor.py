@@ -738,7 +738,7 @@ def train_model_and_predict_on_test(label):
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
 
-        model = linear_model.Ridge(alpha=10, random_state=415)
+        model = linear_model.Ridge(alpha=10, random_state=415, max_iter=10000)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
         scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
@@ -762,7 +762,7 @@ def train_model_and_predict_on_test(label):
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
 
-        model = linear_model.Lasso(alpha=0.0005, random_state=415)
+        model = linear_model.Lasso(alpha=0.0005, random_state=415, max_iter=10000)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
         scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
@@ -786,7 +786,7 @@ def train_model_and_predict_on_test(label):
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
 
-        model = linear_model.Lasso(alpha=0.01, random_state=415)
+        model = linear_model.Lasso(alpha=0.01, random_state=415, max_iter=10000)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
         scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
@@ -810,7 +810,7 @@ def train_model_and_predict_on_test(label):
 
         labels = labels.loc[labels.loc[:, "pid"].isin(train_data["pid"]), :]
 
-        model = linear_model.Lasso(alpha=0.01, random_state=415)
+        model = linear_model.Lasso(alpha=0.01, random_state=415, max_iter=10000)
         model.fit(train_data.iloc[:, 2:], labels[label])
 
         scores = cross_validate(model, train_data.iloc[:, 2:], labels[label], cv=cv, scoring=regression_scoring)
@@ -880,7 +880,7 @@ if __name__ == "__main__":
 
     # the_rest_of_subtask_1= ['LABEL_Bilirubin_total', 'LABEL_Lactate', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_EtCO2']
 
-    all_labels = [*subtask_1_labels, *subtask_2_labels]
+    all_labels = [*subtask_3_labels]
 
     for j in trange(len(all_labels)):
 

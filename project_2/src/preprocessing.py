@@ -883,10 +883,12 @@ def impute_and_scale_and_save_test_features(label, random_seed=777):
     scaled_data.to_csv(path + label + "_test_features_" + version + ".csv")
 
 
-if __name__ == "__main__":
+def implement_workflow():
+    """ All trials before v.0.1.0 """
 
-    """ Classification preprocessing pipeline. """
-    
+
+    """ Classification preprocessing pipeline (before v.0.1.0) """
+
     # # STEP 0: engineer features
     # engineer_and_save_features(train=False)
     # flatten_and_save_features(train=False)
@@ -937,7 +939,7 @@ if __name__ == "__main__":
     # for label in [*subtask_1_labels, *subtask_3_labels]:
     #     impute_and_scale_and_save_test_features(label)
 
-    """ All preprocessing workflow for train and test together, to cope with add_indicator option while imputing. """
+    """ All preprocessing workflow for train and test together, to cope with add_indicator option while imputing. (before v.0.1.0) """
 
     # engineer_train_and_test_features_and_save()
     # flatten_test_and_train_features_and_save()
@@ -969,8 +971,69 @@ if __name__ == "__main__":
     labels_to_impute = [*the_rest_of_subtask_3]
 
     for i in trange(len(labels_to_impute)):
-
         print("imputing ", labels_to_impute[i], "...", sep="")
         impute_and_scale_train_and_test_features_and_save(labels_to_impute[i])
         print("saved\n")
 
+
+def impute_train_and_test_for_each_patient():
+    """ New version of imputation, where it's done for each patient individually. """
+
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+
+    raw_train = pandas.read_csv(path + "train_features.csv")
+
+    train_features = numpy.array(raw_train)
+
+    # impute TRAIN features for each patient
+    for j in range(3, train_features.shape[1]):
+        for i in range(train_features.shape[0] // 12):
+
+            patient_records = train_features[i * 12:(i + 1) * 12, j]
+            finite_records = patient_records[numpy.isfinite(patient_records)]
+
+            if finite_records.shape[0] == 0:
+                # if all values are nans, impute with zeros
+                train_features[i * 12:(i + 1) * 12, j] = 0
+            else:
+                # otherwise, substitute nans with mean of finites
+                patient_records[numpy.isnan(patient_records)] = numpy.mean(finite_records)
+                train_features[i * 12:(i + 1) * 12, j] = patient_records
+
+    train_features = pandas.DataFrame(train_features, columns=raw_train.columns)
+    train_features.to_csv(path + "train_features_imputed_" + version + ".csv")
+    print("train imputed and saved")
+
+    raw_test = pandas.read_csv(path + "test_features.csv")
+
+    test_features = numpy.array(raw_test)
+
+    # impute TEST features for each patient
+    for j in range(3, test_features.shape[1]):
+        for i in range(test_features.shape[0] // 12):
+
+            patient_records = test_features[i * 12:(i + 1) * 12, j]
+            finite_records = patient_records[numpy.isfinite(patient_records)]
+
+            if finite_records.shape[0] == 0:
+                # if all values are nans, impute with zeros
+                test_features[i * 12:(i + 1) * 12, j] = 0
+            else:
+                # otherwise, substitute nans with mean of finites
+                patient_records[numpy.isnan(patient_records)] = numpy.mean(finite_records)
+                test_features[i * 12:(i + 1) * 12, j] = patient_records
+
+    test_features = pandas.DataFrame(test_features, columns=raw_test.columns)
+    test_features.to_csv(path + "test_features_imputed_" + version + ".csv")
+    print("test imputed and saved")
+
+
+if __name__ == "__main__":
+
+    impute_train_and_test_for_each_patient()
+
+
+
+
+
+    pass

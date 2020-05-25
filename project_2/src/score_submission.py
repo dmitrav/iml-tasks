@@ -35,7 +35,7 @@ def example():
     print('Score of sample.zip with itself as groundtruth', get_score(df_true, df_submission))
 
 
-if __name__ == "__main__":
+def compose_submission():
 
     path_to_predictions = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/"
     path_to_test_features = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/engineered_test_v.0.0.45.csv"
@@ -48,11 +48,18 @@ if __name__ == "__main__":
 
     for label in all_labels:
 
-        path = path_to_predictions + "predictions_" + label + "_v.0.0.46.csv"
+        path = path_to_predictions + "predictions_" + label + "_v.0.0.47.csv"
         label_prediction = pandas.read_csv(path)
-        submission[label] = label_prediction.iloc[:, 2]
 
-    submission.to_csv(path_to_predictions + 'prediction_' + version + '.zip', index=False, float_format='%.3f', compression='zip')
+        if label in subtask_1_labels or label in subtask_2_labels:
+            submission[label] = label_prediction.iloc[:, 3]
+        else:
+            submission[label] = label_prediction.iloc[:, 2]
+
+    submission.to_csv(path_to_predictions + 'prediction_' + version + '.zip', index=False, float_format='%.3f',
+                      compression='zip')
 
 
+if __name__ == "__main__":
 
+    pass
