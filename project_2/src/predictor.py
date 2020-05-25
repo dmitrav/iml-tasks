@@ -4,8 +4,8 @@ from project_2.src import preprocessing
 from project_2.src.constants import train_path, train_labels_path, test_path
 from project_2.src.constants import subtask_1_labels, subtask_2_labels, subtask_3_labels, version
 from project_2.src.constants import version
-from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_validate
+from sklearn.model_selection import KFold, train_test_split
+from sklearn.model_selection import cross_validate, GridSearchCV
 from sklearn.svm import SVC, LinearSVR
 from imblearn.combine import SMOTETomek
 from sklearn import linear_model
@@ -833,31 +833,32 @@ def train_model_and_predict_on_test(label):
     return predictions
 
 
-if __name__ == "__main__":
+def implement_pipe():
+    """ Before v.0.1.0 """
 
     """ Classification setting for subtasks 1, 2 
-    
-    # processes = []
-    # start_time = time.time()
-    # 
-    # imputations = ["impute_iter_const", "impute_iter_mean", "impute_iter_mean_ids", "impute_iter_most_freq",
-    #                "impute_simple_const", "impute_simple_const_ids", "impute_simple_most_freq"]
-    # 
-    # for i in range(len(imputations)):
-    #     for j in range(len(subtask_1_labels)):
-    #         p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
-    #         processes.append(p)
-    #         p.start()
-    # 
-    # for process in processes:
-    #     process.join()
-    #     
-    # print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
-    
-    """
+
+        # processes = []
+        # start_time = time.time()
+        # 
+        # imputations = ["impute_iter_const", "impute_iter_mean", "impute_iter_mean_ids", "impute_iter_most_freq",
+        #                "impute_simple_const", "impute_simple_const_ids", "impute_simple_most_freq"]
+        # 
+        # for i in range(len(imputations)):
+        #     for j in range(len(subtask_1_labels)):
+        #         p = multiprocessing.Process(target=run_label_specific_svm, args=(label,imputation))
+        #         processes.append(p)
+        #         p.start()
+        # 
+        # for process in processes:
+        #     process.join()
+        #     
+        # print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
+
+        """
 
     """ Regression setting for subtask 3
-    
+
     # start_time = time.time()
     # 
     # imputations = ["impute_iter_const", "impute_iter_mean", "impute_iter_mean_ids", "impute_iter_most_freq",
@@ -868,9 +869,8 @@ if __name__ == "__main__":
     #         run_label_specific_regression(['LABEL_RRate', 'LABEL_ABPm', 'LABEL_SpO2'][j], imputations[i])
     # 
     # print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
-    
-    """
 
+    """
 
     """ Predictions on test """
 
@@ -883,9 +883,138 @@ if __name__ == "__main__":
     all_labels = [*subtask_3_labels]
 
     for j in trange(len(all_labels)):
-
         result = train_model_and_predict_on_test(all_labels[j])
         result.to_csv(path_to_save_to + "predictions_" + all_labels[j] + "_" + version + ".csv")
         print("results for", all_labels[j], "saved")
 
     print('All done within', int((time.time() - start_time) // 3600 + 1), "hours")
+
+
+def run_classification():
+
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
+    train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
+    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
+
+    assert train_features.shape[1] == test_features.shape[1]
+    all_features = pandas.concat([train_features, test_features], sort=False)
+
+    scaler = StandardScaler()
+    scaler.fit(all_features.iloc[:, 1:])
+    scaled_data = scaler.transform(all_features.iloc[:, 1:])
+
+    train_scaled = pandas.DataFrame(scaled_data).iloc[:train_features.shape[0], :]
+    test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
+
+    for label in [*subtask_1_labels, *subtask_2_labels]:
+        print(label, "is being processed")
+
+        # split
+        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label])
+
+        start = time.time()
+        # upsample positive class
+        resampler = SMOTETomek()
+        X_resampled, y_resampled = resampler.fit_resample(X_train, y_train)
+
+        print("resampling for", label, "took", round(time.time() - start) // 60 + 1, 'min')
+        print("X before: ", X_train.shape[0], ', X after: ', X_resampled.shape[0], sep="")
+
+        clf = GridSearchCV(estimator=SVC(kernel='sigmoid', probability=True),
+                           param_grid={'C': [0.01, 0.05, 0.1, 0.5, 1]},
+                           scoring='roc_auc',
+                           n_jobs=-1)
+
+        start = time.time()
+        clf.fit(X_resampled, y_resampled)
+        print("training for", label, 'took', round(time.time() - start) // 60 + 1, 'min')
+
+        val_score = clf.score(X_val, y_val)
+        print(label, ': best model val auc: ', val_score, sep="")
+
+        predictions = clf.predict_proba(test_scaled)
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_features['pid'].values)
+
+        predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
+        print("predictions for", label, "saved\n")
+
+
+def run_regression():
+
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
+    train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
+    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
+
+    assert train_features.shape[1] == test_features.shape[1]
+    all_features = pandas.concat([train_features, test_features], sort=False)
+
+    scaler = MinMaxScaler()
+    scaler.fit(all_features.iloc[:, 1:])
+    scaled_data = scaler.transform(all_features.iloc[:, 1:])
+
+    train_scaled = pandas.DataFrame(scaled_data).iloc[:train_features.shape[0], :]
+    test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
+
+    for label in [*subtask_3_labels]:
+
+        print(label, "is being processed")
+
+        # split
+        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label])
+
+        # FILTERING?
+
+        lasso = GridSearchCV(estimator=linear_model.Lasso(max_iter=5000, tol=0.01),
+                             param_grid={'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000]},
+                             n_jobs=-1)
+
+        start = time.time()
+        lasso.fit(X_train, y_train)
+        print(label, ", lasso: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
+
+        val_score_lasso = lasso.score(X_val, y_val)
+        print(label, ", lasso: best val auc: ", val_score_lasso, sep="")
+
+        elastic = GridSearchCV(estimator=linear_model.ElasticNet(max_iter=5000, tol=0.01),
+                               param_grid={ 'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000],
+                                            'l1_ratio': [0.1, 0.3, 0.5, 0.7, 0.9]},
+                               n_jobs=-1)
+
+        start = time.time()
+        elastic.fit(X_train, y_train)
+        print(label, ", elastic: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
+
+        val_score_elastic = elastic.score(X_val, y_val)
+        print(label, ", elastic: best val auc: ", val_score_elastic, sep="")
+
+        ridge = GridSearchCV(estimator=linear_model.Ridge(max_iter=5000, tol=0.01),
+                             param_grid={ 'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000]},
+                             n_jobs=-1)
+
+        start = time.time()
+        ridge.fit(X_train, y_train)
+        print(label, ", ridge: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
+
+        val_score_ridge = ridge.score(X_val, y_val)
+        print(label, ", ridge: best val auc: ", val_score_elastic, sep="")
+
+        if max[val_score_elastic, val_score_ridge, val_score_lasso] == val_score_lasso:
+            best_model = lasso
+        elif max[val_score_elastic, val_score_ridge, val_score_lasso] == val_score_ridge:
+            best_model = ridge
+        else:
+            best_model = elastic
+
+        predictions = best_model.predict(test_scaled)
+        predictions = pandas.DataFrame(predictions)
+        predictions.insert(0, 'pid', test_features['pid'].values)
+
+        predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
+        print("predictions for", label, "saved\n")
+
+
+if __name__ == "__main__":
+
+    run_classification()
+    run_regression()
