@@ -963,7 +963,7 @@ def run_regression():
         # split
         X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label])
 
-        # FILTERING?
+        # # TODO: maybe FILTERING?
 
         lasso = GridSearchCV(estimator=linear_model.Lasso(max_iter=5000, tol=0.01),
                              param_grid={'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000]},
@@ -1009,6 +1009,8 @@ def run_regression():
         predictions = best_model.predict(test_scaled)
         predictions = pandas.DataFrame(predictions)
         predictions.insert(0, 'pid', test_features['pid'].values)
+
+        # # TODO: maybe CORRECT PREDICTIONS when unrealistic values are predicted ?
 
         predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
         print("predictions for", label, "saved\n")
