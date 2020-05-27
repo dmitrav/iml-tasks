@@ -38,7 +38,7 @@ def example():
 def compose_submission():
 
     path_to_predictions = "/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/"
-    path_to_test_features = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test/engineered_test_v.0.0.45.csv"
+    path_to_test_features = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv"
 
     test_pid = pandas.read_csv(path_to_test_features)['pid']
 
@@ -48,7 +48,7 @@ def compose_submission():
 
     for label in all_labels:
 
-        path = path_to_predictions + "predictions_" + label + "_v.0.0.47.csv"
+        path = path_to_predictions + "predictions_" + label + "_v.0.1.0.csv"
         label_prediction = pandas.read_csv(path)
 
         if label in subtask_1_labels or label in subtask_2_labels:
@@ -62,4 +62,4 @@ def compose_submission():
 
 if __name__ == "__main__":
 
-    pass
+    compose_submission()

@@ -899,7 +899,8 @@ def run_classification():
     assert train_features.shape[1] == test_features.shape[1]
     all_features = pandas.concat([train_features, test_features], sort=False)
 
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
+    scaler = PowerTransformer(method='yeo-johnson')
     scaler.fit(all_features.iloc[:, 1:])
     scaled_data = scaler.transform(all_features.iloc[:, 1:])
 
@@ -931,6 +932,7 @@ def run_classification():
 
         val_score = clf.score(X_val, y_val)
         print(label, ': best model val auc: ', val_score, sep="")
+        print("best params:", clf.best_params_)
 
         predictions = clf.predict_proba(test_scaled)
         predictions = pandas.DataFrame(predictions)
@@ -949,7 +951,8 @@ def run_regression():
     assert train_features.shape[1] == test_features.shape[1]
     all_features = pandas.concat([train_features, test_features], sort=False)
 
-    scaler = MinMaxScaler()
+    # scaler = MinMaxScaler()
+    scaler = PowerTransformer(method='yeo-johnson')
     scaler.fit(all_features.iloc[:, 1:])
     scaled_data = scaler.transform(all_features.iloc[:, 1:])
 
@@ -975,6 +978,7 @@ def run_regression():
 
         val_score_lasso = lasso.score(X_val, y_val)
         print(label, ", lasso: best val auc: ", val_score_lasso, sep="")
+        print("best params:", lasso.best_params_)
 
         elastic = GridSearchCV(estimator=linear_model.ElasticNet(max_iter=5000, tol=0.01),
                                param_grid={ 'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000],
@@ -987,6 +991,7 @@ def run_regression():
 
         val_score_elastic = elastic.score(X_val, y_val)
         print(label, ", elastic: best val auc: ", val_score_elastic, sep="")
+        print("best params:", elastic.best_params_)
 
         ridge = GridSearchCV(estimator=linear_model.Ridge(max_iter=5000, tol=0.01),
                              param_grid={ 'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000]},
@@ -998,10 +1003,11 @@ def run_regression():
 
         val_score_ridge = ridge.score(X_val, y_val)
         print(label, ", ridge: best val auc: ", val_score_elastic, sep="")
+        print("best params:", ridge.best_params_)
 
-        if max[val_score_elastic, val_score_ridge, val_score_lasso] == val_score_lasso:
+        if max([val_score_elastic, val_score_ridge, val_score_lasso]) == val_score_lasso:
             best_model = lasso
-        elif max[val_score_elastic, val_score_ridge, val_score_lasso] == val_score_ridge:
+        elif max([val_score_elastic, val_score_ridge, val_score_lasso]) == val_score_ridge:
             best_model = ridge
         else:
             best_model = elastic
@@ -1009,8 +1015,6 @@ def run_regression():
         predictions = best_model.predict(test_scaled)
         predictions = pandas.DataFrame(predictions)
         predictions.insert(0, 'pid', test_features['pid'].values)
-
-        # # TODO: maybe CORRECT PREDICTIONS when unrealistic values are predicted ?
 
         predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
         print("predictions for", label, "saved\n")
