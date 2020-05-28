@@ -11,7 +11,8 @@ from imblearn.combine import SMOTETomek
 from sklearn import linear_model
 from tqdm.auto import trange
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler, PowerTransformer, QuantileTransformer, Normalizer
-
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.gaussian_process import GaussianProcessClassifier
 
 def create_svm_models(C_range, random_seed):
     """ This method initialises and returns SVM models with parameters. """
@@ -892,26 +893,32 @@ def implement_pipe():
 
 def run_classification():
 
-    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
-    train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
-    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
+    train_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
+    train_labels = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
+    test_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
 
     assert train_features.shape[1] == test_features.shape[1]
-    all_features = pandas.concat([train_features, test_features], sort=False)
-
-    # scaler = StandardScaler()
-    scaler = PowerTransformer(method='yeo-johnson')
-    scaler.fit(all_features.iloc[:, 1:])
-    scaled_data = scaler.transform(all_features.iloc[:, 1:])
-
-    train_scaled = pandas.DataFrame(scaled_data).iloc[:train_features.shape[0], :]
-    test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
+    all_features = pandas.concat([train_features, test_features])
 
     for label in [*subtask_1_labels, *subtask_2_labels]:
+
         print(label, "is being processed")
 
+        if label in ['LABEL_BaseExcess', 'LABEL_Bilirubin_total', 'LABEL_TroponinI', 'LABEL_SaO2', 'LABEL_Bilirubin_direct', 'LABEL_Sepsis']:
+            scaler = PowerTransformer(method='yeo-johnson')
+        else:
+            scaler = StandardScaler()
+
+        start = time.time()
+        scaler.fit(train_features.iloc[:, 1:])  # fit on the train only
+        scaled_data = scaler.transform(all_features.iloc[:, 1:])  # predict on everything
+        print("scaling for", label, "took", round(time.time() - start) // 60 + 1, 'min')
+
+        train_scaled = pandas.DataFrame(scaled_data).iloc[:train_features.shape[0], :]
+        test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
+
         # split
-        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label])
+        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label], stratify=train_labels[label])
 
         start = time.time()
         # upsample positive class
@@ -921,50 +928,76 @@ def run_classification():
         print("resampling for", label, "took", round(time.time() - start) // 60 + 1, 'min')
         print("X before: ", X_train.shape[0], ', X after: ', X_resampled.shape[0], sep="")
 
-        clf = GridSearchCV(estimator=SVC(kernel='sigmoid', probability=True),
-                           param_grid={'C': [0.01, 0.05, 0.1, 0.5, 1]},
+        svc = GridSearchCV(estimator=SVC(kernel='sigmoid', probability=True),
+                           param_grid={'C': [0.001, 0.005, 0.01]},
                            scoring='roc_auc',
+                           cv=10,
                            n_jobs=-1)
 
         start = time.time()
-        clf.fit(X_resampled, y_resampled)
-        print("training for", label, 'took', round(time.time() - start) // 60 + 1, 'min')
+        svc.fit(X_resampled, y_resampled)
+        print(label, ", svc: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
 
-        val_score = clf.score(X_val, y_val)
-        print(label, ': best model val auc: ', val_score, sep="")
-        print("best params:", clf.best_params_)
+        svc_val_score = svc.score(X_val, y_val)
+        print(label, ', svc: best model val auc: ', svc_val_score, sep="")
+        print("best params:", svc.best_params_)
 
-        predictions = clf.predict_proba(test_scaled)
+        rf = GridSearchCV(estimator=RandomForestClassifier(),
+                          param_grid={'n_estimators': [100, 200, 500]},
+                          scoring='roc_auc',
+                          cv=10,
+                          n_jobs=-1)
+
+        start = time.time()
+        rf.fit(X_resampled, y_resampled)
+        print(label, ", rf: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
+
+        rf_val_score = rf.score(X_val, y_val)
+        print(label, ', rf: best model val auc: ', rf_val_score, sep="")
+        print("best params:", rf.best_params_)
+        print("feature importances:", rf.best_estimator_.feature_importances_)
+
+        if rf_val_score > svc_val_score:
+            best_model = rf
+        else:
+            best_model = svc
+
+        predictions = best_model.predict_proba(test_scaled)
         predictions = pandas.DataFrame(predictions)
         predictions.insert(0, 'pid', test_features['pid'].values)
 
-        predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
+        predictions.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
         print("predictions for", label, "saved\n")
 
 
 def run_regression():
 
-    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
-    train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
-    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
+    train_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
+    train_labels = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
+    test_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
 
     assert train_features.shape[1] == test_features.shape[1]
     all_features = pandas.concat([train_features, test_features], sort=False)
-
-    # scaler = MinMaxScaler()
-    scaler = PowerTransformer(method='yeo-johnson')
-    scaler.fit(all_features.iloc[:, 1:])
-    scaled_data = scaler.transform(all_features.iloc[:, 1:])
-
-    train_scaled = pandas.DataFrame(scaled_data).iloc[:train_features.shape[0], :]
-    test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
 
     for label in [*subtask_3_labels]:
 
         print(label, "is being processed")
 
+        if label in ['LABEL_SpO2']:
+            scaler = PowerTransformer(method='yeo-johnson')
+        else:
+            scaler = MinMaxScaler()
+
+        start = time.time()
+        scaler.fit(train_features.iloc[:, 1:])  # fit on the train only
+        scaled_data = scaler.transform(all_features.iloc[:, 1:])  # predict on everything
+        print("scaling for", label, "took", round(time.time() - start) // 60 + 1, 'min')
+
+        train_scaled = pandas.DataFrame(scaled_data).iloc[:train_features.shape[0], :]
+        test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
+
         # split
-        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label])
+        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label], stratify=train_labels[label])
 
         # # TODO: maybe FILTERING?
 
@@ -1016,7 +1049,7 @@ def run_regression():
         predictions = pandas.DataFrame(predictions)
         predictions.insert(0, 'pid', test_features['pid'].values)
 
-        predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
+        predictions.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
         print("predictions for", label, "saved\n")
 
 
