@@ -48,7 +48,8 @@ def compose_submission():
 
     for label in all_labels:
 
-        path = path_to_predictions + "predictions_" + label + "_v.0.1.0.csv"
+        path = path_to_predictions + "predictions_" + label + "_v.0.1.4.csv"
+
         label_prediction = pandas.read_csv(path)
 
         if label in subtask_1_labels or label in subtask_2_labels:

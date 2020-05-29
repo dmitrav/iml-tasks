@@ -11,7 +11,7 @@ from imblearn.combine import SMOTETomek
 from sklearn import linear_model
 from tqdm.auto import trange
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler, PowerTransformer, QuantileTransformer, Normalizer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessClassifier
 
 def create_svm_models(C_range, random_seed):
@@ -893,9 +893,9 @@ def implement_pipe():
 
 def run_classification():
 
-    train_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
-    train_labels = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
-    test_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
+    train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
+    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
 
     assert train_features.shape[1] == test_features.shape[1]
     all_features = pandas.concat([train_features, test_features])
@@ -928,22 +928,23 @@ def run_classification():
         print("resampling for", label, "took", round(time.time() - start) // 60 + 1, 'min')
         print("X before: ", X_train.shape[0], ', X after: ', X_resampled.shape[0], sep="")
 
-        svc = GridSearchCV(estimator=SVC(kernel='sigmoid', probability=True),
-                           param_grid={'C': [0.001, 0.005, 0.01]},
-                           scoring='roc_auc',
-                           cv=10,
-                           n_jobs=-1)
-
-        start = time.time()
-        svc.fit(X_resampled, y_resampled)
-        print(label, ", svc: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
-
-        svc_val_score = svc.score(X_val, y_val)
-        print(label, ', svc: best model val auc: ', svc_val_score, sep="")
-        print("best params:", svc.best_params_)
+        # svc = GridSearchCV(estimator=SVC(kernel='sigmoid', probability=True),
+        #                    param_grid={'C': [0.001, 0.005, 0.01]},
+        #                    scoring='roc_auc',
+        #                    cv=10,
+        #                    n_jobs=-1)
+        #
+        # start = time.time()
+        # svc.fit(X_resampled, y_resampled)
+        # print(label, ", svc: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
+        #
+        # svc_val_score = svc.score(X_val, y_val)
+        # print(label, ', svc: best model val auc: ', svc_val_score, sep="")
+        # print("best params:", svc.best_params_)
 
         rf = GridSearchCV(estimator=RandomForestClassifier(),
-                          param_grid={'n_estimators': [100, 200, 500]},
+                          param_grid={'n_estimators': [500, 1000, 2000, 3000],
+                                      'criterion': ['gini', 'entropy']},
                           scoring='roc_auc',
                           cv=10,
                           n_jobs=-1)
@@ -955,26 +956,26 @@ def run_classification():
         rf_val_score = rf.score(X_val, y_val)
         print(label, ', rf: best model val auc: ', rf_val_score, sep="")
         print("best params:", rf.best_params_)
-        print("feature importances:", rf.best_estimator_.feature_importances_)
+        # print("feature importances:", rf.best_estimator_.feature_importances_)
 
-        if rf_val_score > svc_val_score:
-            best_model = rf
-        else:
-            best_model = svc
+        # if rf_val_score > svc_val_score:
+        #     best_model = rf
+        # else:
+        #     best_model = svc
 
-        predictions = best_model.predict_proba(test_scaled)
+        predictions = rf.predict_proba(test_scaled)
         predictions = pandas.DataFrame(predictions)
         predictions.insert(0, 'pid', test_features['pid'].values)
 
-        predictions.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
+        predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
         print("predictions for", label, "saved\n")
 
 
 def run_regression():
 
-    train_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
-    train_labels = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
-    test_features = pandas.read_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
+    train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
+    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.0.csv")
 
     assert train_features.shape[1] == test_features.shape[1]
     all_features = pandas.concat([train_features, test_features], sort=False)
@@ -997,12 +998,11 @@ def run_regression():
         test_scaled = pandas.DataFrame(scaled_data).iloc[train_features.shape[0]:, :]
 
         # split
-        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label], stratify=train_labels[label])
+        X_train, X_val, y_train, y_val = train_test_split(train_scaled, train_labels[label])
 
-        # # TODO: maybe FILTERING?
-
-        lasso = GridSearchCV(estimator=linear_model.Lasso(max_iter=5000, tol=0.01),
-                             param_grid={'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000]},
+        lasso = GridSearchCV(estimator=linear_model.Lasso(max_iter=10000, tol=0.001),
+                             param_grid={'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]},
+                             cv=10,
                              n_jobs=-1)
 
         start = time.time()
@@ -1010,24 +1010,12 @@ def run_regression():
         print(label, ", lasso: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
 
         val_score_lasso = lasso.score(X_val, y_val)
-        print(label, ", lasso: best val auc: ", val_score_lasso, sep="")
+        print(label, ", lasso: best val r2: ", val_score_lasso, sep="")
         print("best params:", lasso.best_params_)
 
-        elastic = GridSearchCV(estimator=linear_model.ElasticNet(max_iter=5000, tol=0.01),
-                               param_grid={ 'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000],
-                                            'l1_ratio': [0.1, 0.3, 0.5, 0.7, 0.9]},
-                               n_jobs=-1)
-
-        start = time.time()
-        elastic.fit(X_train, y_train)
-        print(label, ", elastic: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
-
-        val_score_elastic = elastic.score(X_val, y_val)
-        print(label, ", elastic: best val auc: ", val_score_elastic, sep="")
-        print("best params:", elastic.best_params_)
-
-        ridge = GridSearchCV(estimator=linear_model.Ridge(max_iter=5000, tol=0.01),
-                             param_grid={ 'alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5.0, 10, 50.0, 100, 500.0, 1000]},
+        ridge = GridSearchCV(estimator=linear_model.Ridge(max_iter=10000, tol=0.001),
+                             param_grid={ 'alpha': [0.1, 0.5, 1, 5.0, 10., 25., 35., 50.0, 100., 200.0]},
+                             cv=10,
                              n_jobs=-1)
 
         start = time.time()
@@ -1035,25 +1023,23 @@ def run_regression():
         print(label, ", ridge: training for ", label, ' took ', round(time.time() - start) // 60 + 1, ' min', sep="")
 
         val_score_ridge = ridge.score(X_val, y_val)
-        print(label, ", ridge: best val auc: ", val_score_elastic, sep="")
+        print(label, ", ridge: best val r2: ", val_score_ridge, sep="")
         print("best params:", ridge.best_params_)
 
-        if max([val_score_elastic, val_score_ridge, val_score_lasso]) == val_score_lasso:
+        if val_score_lasso > val_score_ridge:
             best_model = lasso
-        elif max([val_score_elastic, val_score_ridge, val_score_lasso]) == val_score_ridge:
-            best_model = ridge
         else:
-            best_model = elastic
+            best_model = ridge
 
         predictions = best_model.predict(test_scaled)
         predictions = pandas.DataFrame(predictions)
         predictions.insert(0, 'pid', test_features['pid'].values)
 
-        predictions.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
+        predictions.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/res/test/predictions_" + label + "_" + version + ".csv")
         print("predictions for", label, "saved\n")
 
 
 if __name__ == "__main__":
 
-    run_classification()
+    # run_classification()
     run_regression()
