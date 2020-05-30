@@ -97,18 +97,15 @@ def get_engineered_features(dataset):
 
 def flatten_and_save_features(train=True):
     """ This method takes 12 time-series values for each patient and each feature
-        and makes 12 features with single values (flattens the time-series).
-
-        SLOW, but works. """
+        and makes 12 features with single values (flattens the time-series). """
 
     if train:
         full_data = pandas.read_csv(train_path)
         labels = pandas.read_csv(train_labels_path)
-        addition = ""
+        addition = "train_"
     else:
         full_data = pandas.read_csv(test_path)
-        labels = pandas.read_csv(train_labels_path)
-        addition = "test/"
+        addition = "test_"
 
     data_with_nans = numpy.array(full_data.iloc[:, 3:])
 
@@ -135,7 +132,7 @@ def flatten_and_save_features(train=True):
         flattened_data.insert(0, 'pid', labels['pid'])
 
     path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/" + addition
-    flattened_data.to_csv(path + "flattened_features_" + version + ".csv")
+    flattened_data.to_csv(path + "flattened_" + version + ".csv", index=False)
 
 
 def engineer_and_save_features(train=True):
@@ -982,8 +979,10 @@ def impute_train_and_test_for_each_patient():
     path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
 
     raw_train = pandas.read_csv(path + "train_features.csv")
-
     train_features = numpy.array(raw_train)
+
+    raw_test = pandas.read_csv(path + "test_features.csv")
+    test_features = numpy.array(raw_test)
 
     # impute TRAIN features for each patient
     for j in range(3, train_features.shape[1]):
@@ -993,20 +992,18 @@ def impute_train_and_test_for_each_patient():
             finite_records = patient_records[numpy.isfinite(patient_records)]
 
             if finite_records.shape[0] == 0:
-                # if all values are nans, impute with zeros
-                train_features[i * 12:(i + 1) * 12, j] = 0
+                # if all values are nans
+                # compute mean among all patients with nans excluded
+                all_feature_values = numpy.concatenate([train_features[:, j], test_features[:, j]], axis=0)
+                total_mean = numpy.mean(numpy.unique(all_feature_values[~numpy.isnan(all_feature_values)]))
+                train_features[i * 12:(i + 1) * 12, j] = total_mean
             else:
                 # otherwise, substitute nans with mean of finites
                 patient_records[numpy.isnan(patient_records)] = numpy.mean(finite_records)
                 train_features[i * 12:(i + 1) * 12, j] = patient_records
 
-    train_features = pandas.DataFrame(train_features, columns=raw_train.columns)
-    train_features.to_csv(path + "train_features_imputed_" + version + ".csv")
+    pandas.DataFrame(train_features, columns=raw_train.columns).to_csv(path + "train_features_imputed_" + version + ".csv")
     print("train imputed and saved")
-
-    raw_test = pandas.read_csv(path + "test_features.csv")
-
-    test_features = numpy.array(raw_test)
 
     # impute TEST features for each patient
     for j in range(3, test_features.shape[1]):
@@ -1016,15 +1013,16 @@ def impute_train_and_test_for_each_patient():
             finite_records = patient_records[numpy.isfinite(patient_records)]
 
             if finite_records.shape[0] == 0:
-                # if all values are nans, impute with zeros
-                test_features[i * 12:(i + 1) * 12, j] = 0
+                # if all values are nans
+                all_feature_values = numpy.concatenate([train_features[:, j], test_features[:, j]], axis=0)
+                total_mean = numpy.mean(numpy.unique(all_feature_values[~numpy.isnan(all_feature_values)]))
+                test_features[i * 12:(i + 1) * 12, j] = total_mean
             else:
                 # otherwise, substitute nans with mean of finites
                 patient_records[numpy.isnan(patient_records)] = numpy.mean(finite_records)
                 test_features[i * 12:(i + 1) * 12, j] = patient_records
 
-    test_features = pandas.DataFrame(test_features, columns=raw_test.columns)
-    test_features.to_csv(path + "test_features_imputed_" + version + ".csv")
+    pandas.DataFrame(test_features, columns=raw_test.columns).to_csv(path + "test_features_imputed_" + version + ".csv")
     print("test imputed and saved")
 
 
@@ -1063,7 +1061,7 @@ def engineer_features(dataset):
                 numpy.percentile(patient_records, 75),
                 numpy.percentile(patient_records, 95),
                 numpy.std(patient_records),
-                non_zero_records.shape[0],  # number of non-zero values
+                numpy.unique(non_zero_records).shape[0],  # number of unique values
                 numpy.sum(patient_records),  # "auc"
                 fit_intercept,
                 fit_linear,
@@ -1092,30 +1090,85 @@ def engineer_features(dataset):
     return numpy.array(flattened)
 
 
+def flatten_features(dataset):
+
+    patient_ages = dataset[:, 2][::12]
+
+    # create an empty array for every feature of every patient
+    new_dataset = [[[] for x in range(3, dataset.shape[1])] for x in range(dataset.shape[0] // 12)]
+
+    for j in range(dataset.shape[1]-3):
+        for i in range(dataset.shape[0] // 12):
+
+            patient_records = dataset[i * 12:(i + 1) * 12, j+3]
+            new_dataset[i][j].extend(patient_records.tolist())
+
+    assert len(new_dataset) == patient_ages.shape[0]
+
+    # reshape data structure to a matrix
+    flattened = []
+    for i in range(len(new_dataset)):
+        # create empty list and add age to it
+        patient_features = [patient_ages[i]]
+        for j in range(len(new_dataset[i])):
+            patient_features.extend(new_dataset[i][j])
+        flattened.append(patient_features)
+
+    return numpy.array(flattened)
+
+
 def get_engineered_features_for_imputed_data():
     """ New method of engineering features after imputation. """
 
     path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
 
-    train_imputed = pandas.read_csv(path + "train_features_imputed_v.0.1.0.csv", index_col=0)
+    train_imputed = pandas.read_csv(path + "train_features_imputed_v.0.1.5.csv", index_col=0)
     train_features = engineer_features(numpy.array(train_imputed))
     train_features = pandas.DataFrame(train_features)
     train_features.insert(0, 'pid', train_imputed['pid'].values[::12])
     train_features.to_csv(path + "train_features_imputed_engineered_" + version + ".csv", index=False)
 
-    test_imputed = pandas.read_csv(path + "test_features_imputed_v.0.1.0.csv", index_col=0)
+    test_imputed = pandas.read_csv(path + "test_features_imputed_v.0.1.5.csv", index_col=0)
     test_features = engineer_features(numpy.array(test_imputed))
     test_features = pandas.DataFrame(test_features)
     test_features.insert(0, 'pid', test_imputed['pid'].values[::12])
     test_features.to_csv(path + "test_features_imputed_engineered_" + version + ".csv", index=False)
 
 
+def get_flattened_features_for_imputed_data():
+    """ New method of engineering features after imputation. """
+
+    path = "/Users/andreidm/ETH/courses/iml-tasks/project_2/data/"
+
+    train_imputed = pandas.read_csv(path + "train_features_imputed_v.0.1.5.csv", index_col=0)
+    train_features = flatten_features(numpy.array(train_imputed))
+    train_features = pandas.DataFrame(train_features)
+    train_features.insert(0, 'pid', train_imputed['pid'].values[::12])
+    train_features.to_csv(path + "train_features_imputed_flattened_" + version + ".csv", index=False)
+
+    test_imputed = pandas.read_csv(path + "test_features_imputed_v.0.1.5.csv", index_col=0)
+    test_features = flatten_features(numpy.array(test_imputed))
+    test_features = pandas.DataFrame(test_features)
+    test_features.insert(0, 'pid', test_imputed['pid'].values[::12])
+    test_features.to_csv(path + "test_features_imputed_flattened_" + version + ".csv", index=False)
+
+
 if __name__ == "__main__":
 
-    impute_train_and_test_for_each_patient()
-    get_engineered_features_for_imputed_data()
+    # impute_train_and_test_for_each_patient()
+    # get_engineered_features_for_imputed_data()
+    # get_flattened_features_for_imputed_data()
 
+    train_engineered = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.5.csv")
+    train_flattened = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_flattened_v.0.1.5.csv")
 
+    test_engineered = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_engineered_v.0.1.5.csv")
+    test_flattened = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_flattened_v.0.1.5.csv")
 
+    train_features = pandas.merge(train_engineered, train_flattened, on='pid')
+    test_features = pandas.merge(test_engineered, test_flattened, on='pid')
+
+    train_features.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_merged_"+version+'.csv', index=False)
+    test_features.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/test_features_imputed_merged_"+version+'.csv', index=False)
 
     pass
