@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, Ro
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.feature_selection import SelectPercentile, f_regression, f_classif
+from sklearn.feature_selection import SelectPercentile, f_regression, f_classif, mutual_info_classif, mutual_info_regression
 
 def create_svm_models(C_range, random_seed):
     """ This method initialises and returns SVM models with parameters. """
@@ -895,7 +895,7 @@ def implement_pipe():
 
 def run_classification():
 
-    random_seed = 333
+    random_seed = 777
 
     # train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
     # train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
@@ -908,7 +908,10 @@ def run_classification():
     assert train_features.shape[1] == test_features.shape[1]
     assert sum(train_features['pid'] != train_labels['pid']) == 0
 
+    # the_rest_of_labels = ['LABEL_EtCO2', 'LABEL_Sepsis']
+
     for label in [*subtask_1_labels, *subtask_2_labels]:
+    # for label in the_rest_of_labels:
 
         print(label, "is being processed")
 
@@ -927,13 +930,13 @@ def run_classification():
 
         pipeline = Pipeline([
             ('scaler', StandardScaler()),
-            ('selector', SelectPercentile(score_func=f_classif)),
+            ('selector', SelectPercentile(score_func=mutual_info_classif)),
             ('classifier', RandomForestClassifier(random_state=random_seed))
         ])
 
         param_grid = {
-            'selector__percentile': [10, 30, 50, 70, 90],
-            'classifier__n_estimators': [2000, 3000],
+            'selector__percentile': [90, 95],
+            'classifier__n_estimators': [500, 1000, 1500],
             'classifier__criterion': ['gini', 'entropy']}
 
         clf = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring='roc_auc', cv=5, n_jobs=-1)
@@ -956,7 +959,7 @@ def run_classification():
 
 def run_regression():
 
-    random_seed = 333
+    random_seed = 777
 
     # train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_features_imputed_engineered_v.0.1.0.csv")
     # train_labels = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_2/data/train_labels.csv")
@@ -974,19 +977,19 @@ def run_regression():
         print(label, "is being processed")
 
         features = train_features.iloc[:, 1:]
-        values = train_labels.iloc[:, 1:]
+        values = train_labels[label]
 
         # split
         X_train, X_val, y_train, y_val = train_test_split(features, values, random_state=random_seed)
 
         pipeline = Pipeline([
             ('scaler', MinMaxScaler()),
-            ('selector', SelectPercentile(score_func=f_regression)),
+            ('selector', SelectPercentile(score_func=mutual_info_regression)),
             ('regressor', linear_model.Lasso(max_iter=20000, tol=0.0005, random_state=random_seed))
         ])
 
         param_grid = {
-            'selector__percentile': [10, 30, 50, 70, 90],
+            'selector__percentile': [5, 10, 15, 20, 25, 30, 90, 95],
             'regressor__alpha': [5e-05, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
         }
 
