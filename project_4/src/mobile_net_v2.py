@@ -5,41 +5,22 @@ from matplotlib import pyplot as plt
 
 if __name__ == "__main__":
 
+    batch_size = 64
+    image_size = (224, 224)
+
     train_batches = tf.keras.preprocessing.image_dataset_from_directory(
-        constants.PATH_TO_TRAIN,
-        labels="inferred",
-        label_mode="binary",
-        class_names=None,
-        color_mode="rgb",
-        batch_size=64,
-        image_size=(224, 224),
-        shuffle=True,
-        seed=constants.SEED,
-        validation_split=0.2,
-        subset="training",
-        interpolation="bilinear",
-        follow_links=False
+        constants.PATH_TO_TRAIN, labels="inferred", label_mode="binary", class_names=None, color_mode="rgb",
+        batch_size=batch_size, image_size=image_size, shuffle=True, seed=constants.SEED, validation_split=0.2,
+        subset="training", interpolation="bilinear", follow_links=False
     )
 
     val_batches = tf.keras.preprocessing.image_dataset_from_directory(
-        constants.PATH_TO_TRAIN,
-        labels="inferred",
-        label_mode="binary",
-        class_names=None,
-        color_mode="rgb",
-        batch_size=64,
-        image_size=(224, 224),
-        shuffle=True,
-        seed=constants.SEED,
-        validation_split=0.2,
-        subset="validation",
-        interpolation="bilinear",
-        follow_links=False
+        constants.PATH_TO_TRAIN, labels="inferred", label_mode="binary", class_names=None, color_mode="rgb",
+        batch_size=batch_size, image_size=image_size, shuffle=True, seed=constants.SEED, validation_split=0.2,
+        subset="validation", interpolation="bilinear", follow_links=False
     )
 
-    # (image_batch, labels) = dataset.take(1)
-
-    IMG_SHAPE = (224, 224, 3)
+    IMG_SHAPE = (*image_size, 3)
 
     # Create the base model from the pre-trained model MobileNet V2
     base_model = tf.keras.applications.MobileNetV2(input_shape=IMG_SHAPE, include_top=False, weights='imagenet')
@@ -60,7 +41,7 @@ if __name__ == "__main__":
     ])
 
     # base_learning_rate = 1e-5  # 1 epoch: 0.51, 2 epoch: 0.53, 3 epoch: 0.55...
-    base_learning_rate = 1e-4  # 1: 0.51, 2: 0.58, 3: 0.6, 4: 0.65...
+    base_learning_rate = 1e-4  # 1: 0.51, 2: 0.58, 3: 0.6, 4: 0.65, 5: 0.66, 6: 0.68
     model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=base_learning_rate),
                   loss="binary_crossentropy",
                   metrics=['accuracy'])
