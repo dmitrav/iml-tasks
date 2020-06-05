@@ -1,6 +1,4 @@
 
-version = "v.0.0.0"
-
 SEED = 42
 
 PATH_TO_RAW_DATA = '/Users/andreidm/ETH/courses/iml-tasks/project_4/data/food/'

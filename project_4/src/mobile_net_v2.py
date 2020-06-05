@@ -5,8 +5,10 @@ from matplotlib import pyplot as plt
 
 if __name__ == "__main__":
 
+    version = "v.1"
+
     batch_size = 64
-    image_size = (224, 224)
+    image_size = (128, 128)
 
     train_batches = tf.keras.preprocessing.image_dataset_from_directory(
         constants.PATH_TO_TRAIN, labels="inferred", label_mode="binary", class_names=None, color_mode="rgb",
@@ -35,8 +37,9 @@ if __name__ == "__main__":
 
     model = tf.keras.Sequential([
         base_model,
+        tf.keras.layers.Dropout(0.3),
         tf.keras.layers.GlobalAveragePooling2D(),
-        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(128, activation="relu", kernel_regularizer=tf.keras.regularizers.l2(0.001)),
         tf.keras.layers.Dense(1, activation="sigmoid")
     ])
 
@@ -48,7 +51,7 @@ if __name__ == "__main__":
 
     model.summary()
 
-    epochs = 20
+    epochs = 15
     validation_steps = 20
 
     loss0, accuracy0 = model.evaluate(val_batches, steps=validation_steps)
@@ -56,8 +59,11 @@ if __name__ == "__main__":
     print("initial loss: {:.2f}".format(loss0))
     print("initial accuracy: {:.2f}".format(accuracy0))
 
+    callbacks = [tf.keras.callbacks.ModelCheckpoint("mnv2_at_{epoch}.h5")]
+
     history = model.fit(train_batches,
                         epochs=epochs,
+                        callbacks=callbacks,
                         validation_data=val_batches)
 
     acc = history.history['accuracy']
