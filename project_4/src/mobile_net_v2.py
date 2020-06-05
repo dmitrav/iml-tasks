@@ -27,7 +27,7 @@ if __name__ == "__main__":
     base_model.trainable = True
 
     # Fine-tune from this layer onwards
-    fine_tune_at = 150
+    fine_tune_at = 151
 
     # Freeze all the layers before the `fine_tune_at` layer
     for layer in base_model.layers[:fine_tune_at]:
@@ -37,12 +37,12 @@ if __name__ == "__main__":
         base_model,
         tf.keras.layers.Dropout(0.5),
         tf.keras.layers.GlobalAveragePooling2D(),
-        tf.keras.layers.Dense(128, activation="relu", kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Dense(64, activation="relu", kernel_regularizer=tf.keras.regularizers.l2(0.001)),
         tf.keras.layers.Dense(1, activation="sigmoid")
     ])
 
-    base_learning_rate = 0.0001
-    model.compile(optimizer=tf.keras.optimizers.Adadelta(lr=base_learning_rate, rho=0.95, epsilon=1e-07),
+    base_learning_rate = 1e-4
+    model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=base_learning_rate),
                   loss="binary_crossentropy",
                   metrics=['accuracy'])
 
