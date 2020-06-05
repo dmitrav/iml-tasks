@@ -5,10 +5,10 @@ from matplotlib import pyplot as plt
 
 if __name__ == "__main__":
 
-    version = "v.1"
+    version = "v2"
 
     batch_size = 64
-    image_size = (128, 128)
+    image_size = (160, 160)
 
     train_batches = tf.keras.preprocessing.image_dataset_from_directory(
         constants.PATH_TO_TRAIN, labels="inferred", label_mode="binary", class_names=None, color_mode="rgb",
@@ -22,14 +22,12 @@ if __name__ == "__main__":
         subset="validation", interpolation="bilinear", follow_links=False
     )
 
-    IMG_SHAPE = (*image_size, 3)
-
     # Create the base model from the pre-trained model MobileNet V2
-    base_model = tf.keras.applications.MobileNetV2(input_shape=IMG_SHAPE, include_top=False, weights='imagenet')
+    base_model = tf.keras.applications.MobileNetV2(input_shape=(*image_size, 3), include_top=False, weights='imagenet')
     base_model.trainable = True
 
     # Fine-tune from this layer onwards
-    fine_tune_at = 145
+    fine_tune_at = 150
 
     # Freeze all the layers before the `fine_tune_at` layer
     for layer in base_model.layers[:fine_tune_at]:
@@ -37,21 +35,20 @@ if __name__ == "__main__":
 
     model = tf.keras.Sequential([
         base_model,
-        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dropout(0.5),
         tf.keras.layers.GlobalAveragePooling2D(),
-        tf.keras.layers.Dense(128, activation="relu", kernel_regularizer=tf.keras.regularizers.l2(0.001)),
+        tf.keras.layers.Dense(128, activation="relu", kernel_regularizer=tf.keras.regularizers.l2(0.01)),
         tf.keras.layers.Dense(1, activation="sigmoid")
     ])
 
-    # base_learning_rate = 1e-5  # 1 epoch: 0.51, 2 epoch: 0.53, 3 epoch: 0.55...
-    base_learning_rate = 1e-4  # 1: 0.51, 2: 0.58, 3: 0.6, 4: 0.65, 5: 0.66, 6: 0.68
-    model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=base_learning_rate),
+    base_learning_rate = 0.0001
+    model.compile(optimizer=tf.keras.optimizers.Adadelta(lr=base_learning_rate, rho=0.95, epsilon=1e-07),
                   loss="binary_crossentropy",
                   metrics=['accuracy'])
 
     model.summary()
 
-    epochs = 15
+    epochs = 20
     validation_steps = 20
 
     loss0, accuracy0 = model.evaluate(val_batches, steps=validation_steps)
@@ -59,12 +56,9 @@ if __name__ == "__main__":
     print("initial loss: {:.2f}".format(loss0))
     print("initial accuracy: {:.2f}".format(accuracy0))
 
-    callbacks = [tf.keras.callbacks.ModelCheckpoint("mnv2_at_{epoch}.h5")]
+    callbacks = [tf.keras.callbacks.ModelCheckpoint("mnv2_" + version + "_at_{epoch}.h5")]
 
-    history = model.fit(train_batches,
-                        epochs=epochs,
-                        callbacks=callbacks,
-                        validation_data=val_batches)
+    history = model.fit(train_batches, epochs=epochs, callbacks=callbacks, validation_data=val_batches)
 
     acc = history.history['accuracy']
     val_acc = history.history['val_accuracy']
