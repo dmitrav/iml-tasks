@@ -5,6 +5,10 @@ import numpy, pandas
 from project_4.src import constants
 from tqdm import tqdm
 
+from xgboost import XGBClassifier
+from scipy.spatial.distance import pdist
+
+
 
 def get_features_from_pretrained_net(model, image):
 
@@ -21,8 +25,6 @@ def get_features_from_pretrained_net(model, image):
 
 
 def generate_train_and_test_datasets():
-
-    IMG_SIZE = (350, 240)
 
     # # TRAIN
 
@@ -61,7 +63,7 @@ def generate_train_and_test_datasets():
 
     # # TEST
 
-    train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data.csv", index=False)
+    train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data.csv", index=False)
     print("train data saved")
 
     with open(constants.TEST_TRIPLETS) as file:
@@ -88,10 +90,112 @@ def generate_train_and_test_datasets():
     test_data = pandas.DataFrame(test_features)
     test_data.insert(0, "id", test_ids)
 
-    test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data.csv", index=False)
+    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv", index=False)
     print("test data saved")
+
+
+def train_xgb_and_predict(X_train, y_train, X_val, y_val):
+
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('selector', SelectPercentile(score_func=mutual_info_classif)),
+        ('classifier', XGBClassifier(random_state=constants.SEED))
+    ])
+
+    param_grid = {
+        'selector__percentile': [20, 50, 95],
+
+        'classifier__learning_rate': [0.1],
+        'classifier__n_estimators': [500],
+        'classifier__max_depth': [5],
+        'classifier__min_child_weight': [1],
+        'classifier__gamma': [0.1],
+        'classifier__reg_alpha': [0.01],
+        'classifier__subsample': [0.8],
+        'classifier__colsample_bytree': [0.8],
+        'classifier__objective': ['binary:logistic'],
+        'classifier__scale_pos_weight': [1]
+    }
+
+    clf = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring='accuracy', cv=5, n_jobs=-1)
+
+    start = time.time()
+    clf.fit(X_train, y_train)
+    print("training took", round(time.time() - start) // 60 + 1, 'min')
+
+    val_score = clf.score(X_val, y_val)
+    print(label, ', best model val auc: ', val_score, sep="")
+    print("best params:", clf.best_params_)
+
+    predictions = clf.predict(test_features.iloc[:, 1:])
+
+    predictions = "\n".join([str(prob) for prob in predictions])
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
+        file.write(predictions)
+
+    print("xgb predictions saved")
+
+    return predictions
+
+
+def get_accuracy_score_for_metric(a_features, b_features, c_features, classes, metric_name):
+
+    hits = 0
+    for i in range(features.shape[0]):
+
+        a_to_b_distance = pdist(numpy.array([a_features[i], b_features[i]]), metric=metric_name)
+        a_to_c_distance = pdist(numpy.array([a_features[i], c_features[i]]), metric=metric_name)
+
+        if a_to_b_distance < a_to_c_distance and int(classes[i]) == 1:
+            hits += 1
+        elif a_to_b_distance >= a_to_c_distance and int(classes[i]) == 0:
+            hits += 1
+        else:
+            pass
+
+    accuracy = hits / features.shape[0]
+    return accuracy
+
+
+def evaluate_distance_based_accuracy(features, classes):
+
+    features = numpy.array(features)
+
+    image_a_features = features[:, :(features.shape[0] // 3)]
+    image_b_features = features[:, (features.shape[0] // 3):(2 * features.shape[0] // 3)]
+    image_c_features = features[:, (2*features.shape[0] // 3):]
+    
+    metrics_to_evaluate = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
+                           'euclidean', 'hamming', 'jaccard', 'jensenshannon', 'kulsinski', 'mahalanobis', 'matching',
+                           'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+                           'sqeuclidean', 'yule']
+
+    metrics_scores = []
+    for metric in tqdm(metrics_to_evaluate):
+        score = get_accuracy_score_for_metric(image_a_features, image_b_features, image_c_features, classes, metric)
+        metrics_scores.append(score)
+
+    result = pandas.DataFrame([[metrics_scores]], columns=metrics_to_evaluate)
+    result.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_scores.csv", index=False)
 
 
 if __name__ == "__main__":
 
-    generate_train_and_test_datasets()
+    # generate_train_and_test_datasets()
+
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data.csv")
+    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
+
+    features = train_features.iloc[:, 2:]
+    classes = train_features['class']
+
+    # DISTANCE BASED ACCURACY
+    evaluate_distance_based_accuracy(features, classes)
+
+    # split
+    X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
+
+    start = time.time()
+
+    # XGBOOST
+    predictions = train_xgb_and_predict(X_train, y_train, X_val, y_val)

@@ -163,7 +163,7 @@ if __name__ == "__main__":
         image = tf.image.resize(image, [224, 224])
         image = tf.reshape(image, [1, 224, 224, 3])
 
-        image_class = int(model.predict(image)[0][0] > 0.5)
+        image_class = int(model.predict(image)[0][0] < 0.5)
 
         predictions.append(image_class)
 
