@@ -35,7 +35,7 @@ def get_concat_h(im1, im2, im3):
     return dst
 
 
-def generate_train_and_test(width, height):
+def generate_train_and_test_images(width, height):
 
     with open(constants.TRAIN_TRIPLETS) as file:
         train_triplets = file.readlines()
