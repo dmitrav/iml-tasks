@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from xgboost import XGBClassifier
 from scipy.spatial.distance import pdist
-
+from sklearn.feature_selection import f_classif
 
 
 def get_features_from_pretrained_net(model, image):
@@ -28,43 +28,46 @@ def generate_train_and_test_datasets():
 
     # # TRAIN
 
-    with open(constants.TRAIN_TRIPLETS) as file:
-        train_triplets = file.readlines()
-
-    train_features = []
-    train_ids = []
-    train_labels = []
-
     model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
 
-    for triplet in tqdm(train_triplets):
-        name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
-
-        # read images from triplet and resize them
-        image_a = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_a + ".jpg")
-        image_b = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_b + ".jpg")
-        image_c = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_c + ".jpg")
-
-        features_a = get_features_from_pretrained_net(model, image_a)
-        features_b = get_features_from_pretrained_net(model, image_b)
-        features_c = get_features_from_pretrained_net(model, image_c)
-
-        train_features.append(numpy.concatenate([features_a, features_b, features_c]))
-        train_ids.append("_".join([name_a, name_b, name_c]))
-        train_labels.append(1)
-
-        train_features.append(numpy.concatenate([features_a, features_c, features_b]))
-        train_ids.append("_".join([name_a, name_c, name_b]))
-        train_labels.append(0)
-
-    train_data = pandas.DataFrame(train_features)
-    train_data.insert(0, "class", train_labels)
-    train_data.insert(0, "id", train_ids)
+    # with open(constants.TRAIN_TRIPLETS) as file:
+    #     train_triplets = file.readlines()
+    #
+    # train_features = []
+    # train_ids = []
+    # train_labels = []
+    #
+    #
+    # for triplet in tqdm(train_triplets):
+    #     name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
+    #
+    #     # read images from triplet and resize them
+    #     image_a = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_a + ".jpg")
+    #     image_b = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_b + ".jpg")
+    #     image_c = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_c + ".jpg")
+    #
+    #     features_a = get_features_from_pretrained_net(model, image_a)
+    #     features_b = get_features_from_pretrained_net(model, image_b)
+    #     features_c = get_features_from_pretrained_net(model, image_c)
+    #
+    #     train_features.append(numpy.concatenate([features_a, features_b, features_c]))
+    #     train_ids.append("_".join([name_a, name_b, name_c]))
+    #     train_labels.append(1)
+    #
+    #     train_features.append(numpy.concatenate([features_a, features_c, features_b]))
+    #     train_ids.append("_".join([name_a, name_c, name_b]))
+    #     train_labels.append(0)
+    #
+    # train_data = pandas.DataFrame(train_features)
+    # train_data = pandas.to_numeric(train_data, downcast='float')
+    # train_data.insert(0, "class", train_labels)
+    # train_data = train_data.astype({'class': 'int8'})
+    # train_data.insert(0, "id", train_ids)
+    #
+    # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data.csv", index=False)
+    # print("train data saved")
 
     # # TEST
-
-    train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data.csv", index=False)
-    print("train data saved")
 
     with open(constants.TEST_TRIPLETS) as file:
         test_triplets = file.readlines()
@@ -88,6 +91,11 @@ def generate_train_and_test_datasets():
         test_ids.append("_".join([name_a, name_b, name_c]))
 
     test_data = pandas.DataFrame(test_features)
+
+    transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
+    test_data = test_data[test_data.columns].apply(transform_fn)
+
+    test_data = pandas.to_numeric(test_data, downcast='float')
     test_data.insert(0, "id", test_ids)
 
     test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv", index=False)
@@ -98,19 +106,20 @@ def train_xgb_and_predict(X_train, y_train, X_val, y_val):
 
     pipeline = Pipeline([
         ('scaler', StandardScaler()),
-        ('selector', SelectPercentile(score_func=mutual_info_classif)),
+        ('selector', SelectPercentile(score_func=f_classif)),
         ('classifier', XGBClassifier(random_state=constants.SEED))
     ])
 
     param_grid = {
-        'selector__percentile': [20, 50, 95],
+        'selector__percentile': [20, 60, 100],
 
-        'classifier__learning_rate': [0.1],
-        'classifier__n_estimators': [500],
-        'classifier__max_depth': [5],
+        'classifier__learning_rate': [0.3],
+        'classifier__n_estimators': [200],
+        'classifier__max_depth': [6],
         'classifier__min_child_weight': [1],
         'classifier__gamma': [0.1],
         'classifier__reg_alpha': [0.01],
+        'classifier__reg_lambda': [1],
         'classifier__subsample': [0.8],
         'classifier__colsample_bytree': [0.8],
         'classifier__objective': ['binary:logistic'],
@@ -127,24 +136,24 @@ def train_xgb_and_predict(X_train, y_train, X_val, y_val):
     print(label, ', best model val auc: ', val_score, sep="")
     print("best params:", clf.best_params_)
 
-    predictions = clf.predict(test_features.iloc[:, 1:])
+    # predictions = clf.predict(test_features.iloc[:, 1:])
+    #
+    # predictions = "\n".join([str(prob) for prob in predictions])
+    # with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
+    #     file.write(predictions)
+    #
+    # print("xgb predictions saved")
 
-    predictions = "\n".join([str(prob) for prob in predictions])
-    with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
-        file.write(predictions)
-
-    print("xgb predictions saved")
-
-    return predictions
+    # return predictions
 
 
 def get_accuracy_score_for_metric(a_features, b_features, c_features, classes, metric_name):
 
     hits = 0
-    for i in range(features.shape[0]):
+    for i in range(len(classes)):
 
-        a_to_b_distance = pdist(numpy.array([a_features[i], b_features[i]]), metric=metric_name)
-        a_to_c_distance = pdist(numpy.array([a_features[i], c_features[i]]), metric=metric_name)
+        a_to_b_distance = pdist([a_features[i].tolist(), b_features[i].tolist()], metric=metric_name)
+        a_to_c_distance = pdist([a_features[i].tolist(), c_features[i].tolist()], metric=metric_name)
 
         if a_to_b_distance < a_to_c_distance and int(classes[i]) == 1:
             hits += 1
@@ -153,7 +162,7 @@ def get_accuracy_score_for_metric(a_features, b_features, c_features, classes, m
         else:
             pass
 
-    accuracy = hits / features.shape[0]
+    accuracy = hits / len(classes)
     return accuracy
 
 
@@ -161,37 +170,51 @@ def evaluate_distance_based_accuracy(features, classes):
 
     features = numpy.array(features)
 
-    image_a_features = features[:, :(features.shape[0] // 3)]
-    image_b_features = features[:, (features.shape[0] // 3):(2 * features.shape[0] // 3)]
-    image_c_features = features[:, (2*features.shape[0] // 3):]
-    
-    metrics_to_evaluate = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-                           'euclidean', 'hamming', 'jaccard', 'jensenshannon', 'kulsinski', 'mahalanobis', 'matching',
-                           'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-                           'sqeuclidean', 'yule']
+    image_a_features = features[:, :(features.shape[1] // 3)]
+    image_b_features = features[:, (features.shape[1] // 3):(2 * features.shape[1] // 3)]
+    image_c_features = features[:, (2*features.shape[1] // 3):]
 
     metrics_scores = []
-    for metric in tqdm(metrics_to_evaluate):
+    for metric in tqdm(constants.DISTANCE_METRICS):
         score = get_accuracy_score_for_metric(image_a_features, image_b_features, image_c_features, classes, metric)
         metrics_scores.append(score)
+        print(metric, "scored:", round(score, 3))
 
-    result = pandas.DataFrame([[metrics_scores]], columns=metrics_to_evaluate)
+    return metrics_scores
+
+
+def compute_distances_on_train_set():
+
+    path_to_features = "/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv"
+
+    dataset_scores = []
+    for i in tqdm(range(1, 13)):
+        print("train_data_{}".format(i), "is being processed\n")
+        train_features = pandas.read_csv(path_to_features.format(i))
+
+        features = train_features.iloc[:, 2:]
+        classes = train_features['class']
+
+        # DISTANCE BASED ACCURACY
+        metrics_scores = evaluate_distance_based_accuracy(features, classes)
+        dataset_scores.append(metrics_scores)
+
+    result = pandas.DataFrame(dataset_scores, columns=constants.DISTANCE_METRICS)
     result.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_scores.csv", index=False)
 
 
 if __name__ == "__main__":
 
     # generate_train_and_test_datasets()
+    # # DISTANCE BASED ACCURACY
+    # compute_distances_on_train_set()
 
-    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data.csv")
-    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
 
     features = train_features.iloc[:, 2:]
     classes = train_features['class']
 
-    # DISTANCE BASED ACCURACY
-    evaluate_distance_based_accuracy(features, classes)
-
+    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
     # split
     X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
 
@@ -199,3 +222,4 @@ if __name__ == "__main__":
 
     # XGBOOST
     predictions = train_xgb_and_predict(X_train, y_train, X_val, y_val)
+

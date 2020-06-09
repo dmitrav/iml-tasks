@@ -1,13 +1,23 @@
 
 import PIL
 import tensorflow as tf
-import numpy
-
+import numpy, pandas
 from scipy.spatial.distance import pdist
+from project_4.src import distance_based
+from project_4.src import constants
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
 
-a = numpy.array([1,2,3,4,5])
-b = numpy.array([12,32,43,45,52])
-c = numpy.array([143,31,63,42,92])
+train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
 
-print(pdist(numpy.array([a,b])))
-print(pdist(numpy.array([a,c])))
+features = train_features.iloc[:, 2:]
+classes = train_features['class']
+
+# test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
+# split
+X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
+
+start = time.time()
+
+# XGBOOST
+distance_based.train_xgb_and_predict(X_train, y_train, X_val, y_val)
