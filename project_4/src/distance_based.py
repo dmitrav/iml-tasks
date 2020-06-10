@@ -5,7 +5,7 @@ import numpy, pandas, time
 from project_4.src import constants
 from tqdm import tqdm
 
-from xgboost import XGBClassifier
+# from xgboost import XGBClassifier
 from scipy.spatial.distance import pdist
 from sklearn.feature_selection import f_classif
 
@@ -23,7 +23,10 @@ def get_features_from_pretrained_net(model, image):
     img_data = tf.keras.preprocessing.image.img_to_array(image)
     img_data = numpy.expand_dims(img_data, axis=0)
 
-    img_data = tf.keras.applications.inception_v3.preprocess_input(img_data)
+    # img_data = tf.keras.applications.inception_v3.preprocess_input(img_data)
+    # img_data = tf.keras.applications.inception_resnet_v2.preprocess_input(img_data)
+    # img_data = tf.keras.applications.xception.preprocess_input(img_data)
+    img_data = tf.keras.applications.nasnet.preprocess_input(img_data)
 
     features_3d = model.predict(img_data)
 
@@ -36,46 +39,75 @@ def generate_train_and_test_datasets():
 
     # # TRAIN
 
-    model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
+    # model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
+    # model = tf.keras.applications.InceptionResNetV2(include_top=False, weights='imagenet')
+    # model = tf.keras.applications.Xception(include_top=False, weights='imagenet')
+    model = tf.keras.applications.NASNetLarge(include_top=False, weights='imagenet')
 
-    # with open(constants.TRAIN_TRIPLETS) as file:
-    #     train_triplets = file.readlines()
-    #
-    # train_features = []
-    # train_ids = []
-    # train_labels = []
-    #
-    #
-    # for triplet in tqdm(train_triplets):
-    #     name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
-    #
-    #     # read images from triplet and resize them
-    #     image_a = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_a + ".jpg")
-    #     image_b = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_b + ".jpg")
-    #     image_c = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_c + ".jpg")
-    #
-    #     features_a = get_features_from_pretrained_net(model, image_a)
-    #     features_b = get_features_from_pretrained_net(model, image_b)
-    #     features_c = get_features_from_pretrained_net(model, image_c)
-    #
-    #     train_features.append(numpy.concatenate([features_a, features_b, features_c]))
-    #     train_ids.append("_".join([name_a, name_b, name_c]))
-    #     train_labels.append(1)
-    #
-    #     train_features.append(numpy.concatenate([features_a, features_c, features_b]))
-    #     train_ids.append("_".join([name_a, name_c, name_b]))
-    #     train_labels.append(0)
-    #
-    # train_data = pandas.DataFrame(train_features)
-    # train_data = pandas.to_numeric(train_data, downcast='float')
-    # train_data.insert(0, "class", train_labels)
-    # train_data = train_data.astype({'class': 'int8'})
-    # train_data.insert(0, "id", train_ids)
-    #
-    # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data.csv", index=False)
-    # print("train data saved")
+    with open(constants.TRAIN_TRIPLETS) as file:
+        train_triplets = file.readlines()
 
-    # # TEST
+    train_features = []
+    train_ids = []
+    train_labels = []
+
+    i = 1
+
+    for triplet in tqdm(train_triplets):
+        name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
+
+        # read images from triplet and resize them
+        image_a = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_a + ".jpg")
+        image_b = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_b + ".jpg")
+        image_c = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_c + ".jpg")
+
+        features_a = get_features_from_pretrained_net(model, image_a)
+        features_b = get_features_from_pretrained_net(model, image_b)
+        features_c = get_features_from_pretrained_net(model, image_c)
+
+        train_features.append(numpy.concatenate([features_a, features_b, features_c]))
+        train_ids.append("_".join([name_a, name_b, name_c]))
+        train_labels.append(1)
+
+        train_features.append(numpy.concatenate([features_a, features_c, features_b]))
+        train_ids.append("_".join([name_a, name_c, name_b]))
+        train_labels.append(0)
+
+        if len(train_features) == 10000:
+
+            train_data = pandas.DataFrame(train_features)
+
+            transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
+            train_data = train_data[train_data.columns].apply(transform_fn)
+
+            train_data.insert(0, "id", train_ids)
+            train_data.insert(0, "class", train_labels)
+
+            # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_IRNv2_{}.csv".format(i), index=False)
+            # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i), index=False)
+            train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv".format(i), index=False)
+            print("train data {} saved".format(i))
+
+            train_features = []
+            train_labels = []
+            train_ids = []
+            i += 1
+
+    train_data = pandas.DataFrame(train_features)
+
+    transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
+    train_data = train_data[train_data.columns].apply(transform_fn)
+
+    train_data.insert(0, "id", train_ids)
+    train_data.insert(0, "class", train_labels)
+    train_data = train_data.astype({'class': 'int8'})
+
+    # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_IRNv2_{}.csv".format(i), index=False)
+    # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i), index=False)
+    train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv".format(i), index=False)
+    print("train data saved")
+
+    # TEST
 
     with open(constants.TEST_TRIPLETS) as file:
         test_triplets = file.readlines()
@@ -109,7 +141,9 @@ def generate_train_and_test_datasets():
 
             test_data.insert(0, "id", test_ids)
 
-            test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i), index=False)
+            # test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data_IRNv2_{}.csv".format(i), index=False)
+            # test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i), index=False)
+            test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data_NN_{}.csv".format(i), index=False)
             print("test data {} saved".format(i))
 
             test_features = []
@@ -124,7 +158,9 @@ def generate_train_and_test_datasets():
 
     test_data.insert(0, "id", test_ids)
 
-    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i), index=False)
+    # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_IRNv2_{}.csv".format(i), index=False)
+    # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i), index=False)
+    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_NN_{}.csv".format(i), index=False)
     print("test data saved")
 
 
@@ -229,36 +265,36 @@ def compute_distances_on_train_set():
 
 if __name__ == "__main__":
 
-    # generate_train_and_test_datasets()
+    generate_train_and_test_datasets()
     # DISTANCE BASED ACCURACY
     # compute_distances_on_train_set()
 
-    train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
-    train_features = train_chunk.sample(frac=0.3, replace=False)
-
+    # train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
+    # train_features = train_chunk.sample(frac=0.3, replace=False)
+    #
     # for i in range(2,13):
     #     train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv".format(i))
     #     train_features = pandas.concat([train_features, train_chunk.sample(frac=0.3, replace=False)])
-
-    features = train_features.iloc[:, 2:]
-    classes = train_features['class']
-
-    # split
-    X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
-
-    start = time.time()
-
-    # get trained model
-    best_model = train_xgb(X_train, y_train, X_val, y_val)
-
-    # predict on all test chunks
-    all_predictions = []
-    for i in range(1,7):
-        test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i))
-        chunk_predictions = best_model.predict(test_chunk.iloc[:, 1:])
-
-        print(chunk_predictions)
-
+    #
+    # features = train_features.iloc[:, 2:]
+    # classes = train_features['class']
+    #
+    # # split
+    # X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
+    #
+    # start = time.time()
+    #
+    # # get trained model
+    # best_model = train_xgb(X_train, y_train, X_val, y_val)
+    #
+    # # predict on all test chunks
+    # all_predictions = []
+    # for i in range(1,7):
+    #     test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i))
+    #     chunk_predictions = best_model.predict(test_chunk.iloc[:, 1:])
+    #
+    #     print(chunk_predictions)
+    #
     # predictions = "\n".join([str(prob) for prob in predictions])
     # with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
     #     file.write(predictions)
