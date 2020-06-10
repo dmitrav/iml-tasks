@@ -1,13 +1,21 @@
 
 import PIL, tqdm
 import tensorflow as tf
-import numpy, pandas
+import numpy, pandas, time
 from project_4.src import constants
 from tqdm import tqdm
 
 from xgboost import XGBClassifier
 from scipy.spatial.distance import pdist
 from sklearn.feature_selection import f_classif
+
+from sklearn.model_selection import KFold, train_test_split
+from sklearn.model_selection import cross_validate, GridSearchCV
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectPercentile, f_regression, f_classif, mutual_info_classif, mutual_info_regression
 
 
 def get_features_from_pretrained_net(model, image):
@@ -75,6 +83,8 @@ def generate_train_and_test_datasets():
     test_features = []
     test_ids = []
 
+    i = 1
+
     for triplet in tqdm(test_triplets):
         name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
 
@@ -90,41 +100,63 @@ def generate_train_and_test_datasets():
         test_features.append(numpy.concatenate([features_a, features_b, features_c]))
         test_ids.append("_".join([name_a, name_b, name_c]))
 
+        if len(test_features) == 10000:
+
+            test_data = pandas.DataFrame(test_features)
+
+            transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
+            test_data = test_data[test_data.columns].apply(transform_fn)
+
+            test_data.insert(0, "id", test_ids)
+
+            test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i), index=False)
+            print("test data {} saved".format(i))
+
+            test_features = []
+            test_ids = []
+            i += 1
+
+    # save last chunk of data
     test_data = pandas.DataFrame(test_features)
 
     transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
     test_data = test_data[test_data.columns].apply(transform_fn)
 
-    test_data = pandas.to_numeric(test_data, downcast='float')
     test_data.insert(0, "id", test_ids)
 
-    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv", index=False)
+    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i), index=False)
     print("test data saved")
 
 
 def train_xgb_and_predict(X_train, y_train, X_val, y_val):
 
     pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('selector', SelectPercentile(score_func=f_classif)),
+        # ('scaler', StandardScaler()),
+        # ('selector', SelectPercentile(score_func=f_classif)),
         ('classifier', XGBClassifier(random_state=constants.SEED))
     ])
 
     param_grid = {
-        'selector__percentile': [20, 60, 100],
+        # 'selector__percentile': [90, 100],
 
-        'classifier__learning_rate': [0.3],
-        'classifier__n_estimators': [200],
-        'classifier__max_depth': [6],
-        'classifier__min_child_weight': [1],
-        'classifier__gamma': [0.1],
-        'classifier__reg_alpha': [0.01],
+        'classifier__learning_rate': [0.005, 0.01, 0.1],
+        'classifier__n_estimators': [100, 500, 1000],
+        'classifier__max_depth': [8],
+        'classifier__min_child_weight': [3],
+        'classifier__gamma': [1],
+        'classifier__reg_alpha': [1],
         'classifier__reg_lambda': [1],
-        'classifier__subsample': [0.8],
-        'classifier__colsample_bytree': [0.8],
+        'classifier__subsample': [1.],
+        'classifier__colsample_bytree': [0.3],
         'classifier__objective': ['binary:logistic'],
         'classifier__scale_pos_weight': [1]
     }
+
+    # default pars + 100% -> 0.63 accuracy
+    # lr = 0.05, max_depth = 8, 500 estimators -> 0.653
+    # lr = 0.1, max_depth = 8, 200 estimators, min_child_weight = 3, reg_alpha = 1 -> 0.66
+    # lr = 0.01, colsample_bytree = 0.3, subsample = 1., 100 estimators -> 0.66
+    # without scaler, lr = 0.005, 100 estimators -> 0.666 + MUCH FASTER
 
     clf = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring='accuracy', cv=5, n_jobs=-1)
 
@@ -133,7 +165,7 @@ def train_xgb_and_predict(X_train, y_train, X_val, y_val):
     print("training took", round(time.time() - start) // 60 + 1, 'min')
 
     val_score = clf.score(X_val, y_val)
-    print(label, ', best model val auc: ', val_score, sep="")
+    print('best model val auc: ', val_score, sep="")
     print("best params:", clf.best_params_)
 
     # predictions = clf.predict(test_features.iloc[:, 1:])
@@ -206,15 +238,16 @@ def compute_distances_on_train_set():
 if __name__ == "__main__":
 
     # generate_train_and_test_datasets()
-    # # DISTANCE BASED ACCURACY
+    # DISTANCE BASED ACCURACY
     # compute_distances_on_train_set()
 
-    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
+    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_2.csv")
 
     features = train_features.iloc[:, 2:]
     classes = train_features['class']
 
-    test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
+    # test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
+
     # split
     X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
 

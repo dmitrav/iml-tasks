@@ -1,7 +1,7 @@
 
 import PIL
 import tensorflow as tf
-import numpy, pandas
+import numpy, pandas, time
 from scipy.spatial.distance import pdist
 from project_4.src import distance_based
 from project_4.src import constants
@@ -16,8 +16,6 @@ classes = train_features['class']
 # test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
 # split
 X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
-
-start = time.time()
 
 # XGBOOST
 distance_based.train_xgb_and_predict(X_train, y_train, X_val, y_val)
