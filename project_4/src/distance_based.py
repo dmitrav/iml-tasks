@@ -140,7 +140,7 @@ def train_xgb(X_train, y_train, X_val, y_val):
         # 'selector__percentile': [90, 100],
 
         'classifier__learning_rate': [0.01],
-        'classifier__n_estimators': [100],
+        'classifier__n_estimators': [5000],
         'classifier__max_depth': [8],
         'classifier__min_child_weight': [3],
         'classifier__gamma': [1],
@@ -157,6 +157,7 @@ def train_xgb(X_train, y_train, X_val, y_val):
     # lr = 0.1, max_depth = 8, 200 estimators, min_child_weight = 3, reg_alpha = 1 -> 0.66
     # lr = 0.01, colsample_bytree = 0.3, subsample = 1., 100 estimators -> 0.66
     # without scaler, lr = 0.005, 100 estimators -> 0.666 + MUCH FASTER
+    # without scaler, lr = 0.01, 1000 estimators -> ~0.69
 
     clf = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring='accuracy', cv=5, n_jobs=-1)
 
@@ -227,6 +228,34 @@ def compute_distances_on_train_set():
     result.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_scores.csv", index=False)
 
 
+def predict_for_test_based_on_distance():
+
+    predictions = []
+    for i in range(1,7):
+
+        print("predicting for training chunk", i)
+        test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i))
+        features = numpy.array(test_chunk.iloc[:, 1:])
+
+        a_features = features[:, :(features.shape[1] // 3)]
+        b_features = features[:, (features.shape[1] // 3):(2 * features.shape[1] // 3)]
+        c_features = features[:, (2 * features.shape[1] // 3):]
+
+        for i in range(features.shape[0]):
+
+            a_to_b_distance = pdist([a_features[i].tolist(), b_features[i].tolist()], metric='correlation')
+            a_to_c_distance = pdist([a_features[i].tolist(), c_features[i].tolist()], metric='correlation')
+
+            if a_to_b_distance < a_to_c_distance:
+                predictions.append(1)
+            else:
+                predictions.append(0)
+
+    predictions = "\n".join([str(x) for x in predictions])
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_predictions.txt", 'w') as file:
+        file.write(predictions)
+
+
 if __name__ == "__main__":
 
     # generate_train_and_test_datasets()
@@ -234,11 +263,11 @@ if __name__ == "__main__":
     # compute_distances_on_train_set()
 
     train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
-    train_features = train_chunk.sample(frac=0.3, replace=False)
+    train_features = train_chunk.sample(frac=0.15, replace=False)
 
-    # for i in range(2,13):
-    #     train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv".format(i))
-    #     train_features = pandas.concat([train_features, train_chunk.sample(frac=0.3, replace=False)])
+    for i in range(2, 13):
+        train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv".format(i))
+        train_features = pandas.concat([train_features, train_chunk.sample(frac=0.15, replace=False)])
 
     features = train_features.iloc[:, 2:]
     classes = train_features['class']
@@ -249,19 +278,22 @@ if __name__ == "__main__":
     start = time.time()
 
     # get trained model
+    print("training started...")
     best_model = train_xgb(X_train, y_train, X_val, y_val)
+    print("training took", (time.time()-start) // 60, "min")
 
     # predict on all test chunks
     all_predictions = []
     for i in range(1,7):
+        print("predicting for training chunk", i)
         test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i))
         chunk_predictions = best_model.predict(test_chunk.iloc[:, 1:])
 
-        print(chunk_predictions)
+        all_predictions.extend(chunk_predictions.tolist())
 
-    # predictions = "\n".join([str(prob) for prob in predictions])
-    # with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
-    #     file.write(predictions)
-    #
-    # print("xgb predictions saved")
+    predictions = "\n".join([str(x) for x in all_predictions])
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost_predictions.txt", 'w') as file:
+        file.write(predictions)
+
+    print("xgb predictions saved")
 
