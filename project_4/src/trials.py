@@ -18,4 +18,4 @@ classes = train_features['class']
 X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
 
 # XGBOOST
-distance_based.train_xgb_and_predict(X_train, y_train, X_val, y_val)
+distance_based.train_xgb(X_train, y_train, X_val, y_val)

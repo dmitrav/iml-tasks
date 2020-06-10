@@ -128,7 +128,7 @@ def generate_train_and_test_datasets():
     print("test data saved")
 
 
-def train_xgb_and_predict(X_train, y_train, X_val, y_val):
+def train_xgb(X_train, y_train, X_val, y_val):
 
     pipeline = Pipeline([
         # ('scaler', StandardScaler()),
@@ -139,8 +139,8 @@ def train_xgb_and_predict(X_train, y_train, X_val, y_val):
     param_grid = {
         # 'selector__percentile': [90, 100],
 
-        'classifier__learning_rate': [0.005, 0.01, 0.1],
-        'classifier__n_estimators': [100, 500, 1000],
+        'classifier__learning_rate': [0.01],
+        'classifier__n_estimators': [100],
         'classifier__max_depth': [8],
         'classifier__min_child_weight': [3],
         'classifier__gamma': [1],
@@ -168,15 +168,7 @@ def train_xgb_and_predict(X_train, y_train, X_val, y_val):
     print('best model val auc: ', val_score, sep="")
     print("best params:", clf.best_params_)
 
-    # predictions = clf.predict(test_features.iloc[:, 1:])
-    #
-    # predictions = "\n".join([str(prob) for prob in predictions])
-    # with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
-    #     file.write(predictions)
-    #
-    # print("xgb predictions saved")
-
-    # return predictions
+    return clf
 
 
 def get_accuracy_score_for_metric(a_features, b_features, c_features, classes, metric_name):
@@ -241,18 +233,35 @@ if __name__ == "__main__":
     # DISTANCE BASED ACCURACY
     # compute_distances_on_train_set()
 
-    train_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_2.csv")
+    train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
+    train_features = train_chunk.sample(frac=0.3, replace=False)
+
+    # for i in range(2,13):
+    #     train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv".format(i))
+    #     train_features = pandas.concat([train_features, train_chunk.sample(frac=0.3, replace=False)])
 
     features = train_features.iloc[:, 2:]
     classes = train_features['class']
-
-    # test_features = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data.csv")
 
     # split
     X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
 
     start = time.time()
 
-    # XGBOOST
-    predictions = train_xgb_and_predict(X_train, y_train, X_val, y_val)
+    # get trained model
+    best_model = train_xgb(X_train, y_train, X_val, y_val)
+
+    # predict on all test chunks
+    all_predictions = []
+    for i in range(1,7):
+        test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i))
+        chunk_predictions = best_model.predict(test_chunk.iloc[:, 1:])
+
+        print(chunk_predictions)
+
+    # predictions = "\n".join([str(prob) for prob in predictions])
+    # with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
+    #     file.write(predictions)
+    #
+    # print("xgb predictions saved")
 
