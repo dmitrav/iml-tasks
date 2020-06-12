@@ -25,8 +25,8 @@ def get_features_from_pretrained_net(model, image):
 
     # img_data = tf.keras.applications.inception_v3.preprocess_input(img_data)
     # img_data = tf.keras.applications.inception_resnet_v2.preprocess_input(img_data)
-    # img_data = tf.keras.applications.xception.preprocess_input(img_data)
-    img_data = tf.keras.applications.nasnet.preprocess_input(img_data)
+    img_data = tf.keras.applications.xception.preprocess_input(img_data)
+    # img_data = tf.keras.applications.nasnet.preprocess_input(img_data)
 
     features_3d = model.predict(img_data)
 
@@ -37,75 +37,77 @@ def get_features_from_pretrained_net(model, image):
 
 def generate_train_and_test_datasets():
 
-    # # TRAIN
-
     # model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
     # model = tf.keras.applications.InceptionResNetV2(include_top=False, weights='imagenet')
-    # model = tf.keras.applications.Xception(include_top=False, weights='imagenet')
-    model = tf.keras.applications.NASNetLarge(include_top=False, weights='imagenet')
+    model = tf.keras.applications.Xception(include_top=False, weights='imagenet')
+    # model = tf.keras.applications.NASNetLarge(include_top=False, weights='imagenet')
 
-    with open(constants.TRAIN_TRIPLETS) as file:
-        train_triplets = file.readlines()
-
-    train_features = []
-    train_ids = []
-    train_labels = []
-
-    i = 1
-
-    for triplet in tqdm(train_triplets):
-        name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
-
-        # read images from triplet and resize them
-        image_a = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_a + ".jpg")
-        image_b = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_b + ".jpg")
-        image_c = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_c + ".jpg")
-
-        features_a = get_features_from_pretrained_net(model, image_a)
-        features_b = get_features_from_pretrained_net(model, image_b)
-        features_c = get_features_from_pretrained_net(model, image_c)
-
-        train_features.append(numpy.concatenate([features_a, features_b, features_c]))
-        train_ids.append("_".join([name_a, name_b, name_c]))
-        train_labels.append(1)
-
-        train_features.append(numpy.concatenate([features_a, features_c, features_b]))
-        train_ids.append("_".join([name_a, name_c, name_b]))
-        train_labels.append(0)
-
-        if len(train_features) == 10000:
-
-            train_data = pandas.DataFrame(train_features)
-
-            transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
-            train_data = train_data[train_data.columns].apply(transform_fn)
-
-            train_data.insert(0, "id", train_ids)
-            train_data.insert(0, "class", train_labels)
-
-            # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_IRNv2_{}.csv".format(i), index=False)
-            # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i), index=False)
-            train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv".format(i), index=False)
-            print("train data {} saved".format(i))
-
-            train_features = []
-            train_labels = []
-            train_ids = []
-            i += 1
-
-    train_data = pandas.DataFrame(train_features)
-
-    transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
-    train_data = train_data[train_data.columns].apply(transform_fn)
-
-    train_data.insert(0, "id", train_ids)
-    train_data.insert(0, "class", train_labels)
-    train_data = train_data.astype({'class': 'int8'})
-
-    # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_IRNv2_{}.csv".format(i), index=False)
-    # train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i), index=False)
-    train_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv".format(i), index=False)
-    print("train data saved")
+    # # TRAIN
+    # with open(constants.TRAIN_TRIPLETS) as file:
+    #     train_triplets = file.readlines()
+    #
+    # train_features = []
+    # train_ids = []
+    # train_labels = []
+    #
+    # i = 1
+    #
+    # for triplet in tqdm(train_triplets):
+    #     name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
+    #
+    #     # read images from triplet and resize them
+    #     # resize to 331 x 331 for nasnet...
+    #     target_size = (331, 331)
+    #
+    #     image_a = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_a + ".jpg", target_size=target_size)
+    #     image_b = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_b + ".jpg", target_size=target_size)
+    #     image_c = tf.keras.preprocessing.image.load_img(constants.PATH_TO_RAW_DATA + name_c + ".jpg", target_size=target_size)
+    #
+    #     features_a = get_features_from_pretrained_net(model, image_a)
+    #     features_b = get_features_from_pretrained_net(model, image_b)
+    #     features_c = get_features_from_pretrained_net(model, image_c)
+    #
+    #     train_features.append(numpy.concatenate([features_a, features_b, features_c]))
+    #     train_ids.append("_".join([name_a, name_b, name_c]))
+    #     train_labels.append(1)
+    #
+    #     train_features.append(numpy.concatenate([features_a, features_c, features_b]))
+    #     train_ids.append("_".join([name_a, name_c, name_b]))
+    #     train_labels.append(0)
+    #
+    #     if len(train_features) == 10000:
+    #
+    #         train_data = pandas.DataFrame(train_features)
+    #
+    #         transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
+    #         train_data = train_data[train_data.columns].apply(transform_fn)
+    #
+    #         train_data.insert(0, "id", train_ids)
+    #         train_data.insert(0, "class", train_labels)
+    #
+    #         # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_IRNv2_{}.csv".format(i), index=False)
+    #         # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i), index=False)
+    #         train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv".format(i), index=False)
+    #         print("train data {} saved".format(i))
+    #
+    #         train_features = []
+    #         train_labels = []
+    #         train_ids = []
+    #         i += 1
+    #
+    # train_data = pandas.DataFrame(train_features)
+    #
+    # transform_fn = lambda x: pandas.to_numeric(x, downcast='float')
+    # train_data = train_data[train_data.columns].apply(transform_fn)
+    #
+    # train_data.insert(0, "id", train_ids)
+    # train_data.insert(0, "class", train_labels)
+    # train_data = train_data.astype({'class': 'int8'})
+    #
+    # # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_IRNv2_{}.csv".format(i), index=False)
+    # # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i), index=False)
+    # train_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv".format(i), index=False)
+    # print("train data saved")
 
     # TEST
 
@@ -116,6 +118,10 @@ def generate_train_and_test_datasets():
     test_ids = []
 
     i = 1
+
+    # read images from triplet and resize them
+    # resize to 331 x 331 for nasnet...
+    # target_size = (331, 331)
 
     for triplet in tqdm(test_triplets):
         name_a, name_b, name_c = [image_id.replace("\n", "") for image_id in triplet.split(" ")]
@@ -141,9 +147,9 @@ def generate_train_and_test_datasets():
 
             test_data.insert(0, "id", test_ids)
 
-            # test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data_IRNv2_{}.csv".format(i), index=False)
-            # test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i), index=False)
-            test_data.to_csv("/Users/dmitrav/ETH/courses/iml-tasks/project_4/data/test_data_NN_{}.csv".format(i), index=False)
+            # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_IRNv2_{}.csv".format(i), index=False)
+            # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i), index=False)
+            test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_NN_{}.csv".format(i), index=False)
             print("test data {} saved".format(i))
 
             test_features = []
@@ -159,8 +165,8 @@ def generate_train_and_test_datasets():
     test_data.insert(0, "id", test_ids)
 
     # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_IRNv2_{}.csv".format(i), index=False)
-    # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i), index=False)
-    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_NN_{}.csv".format(i), index=False)
+    # test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_NN_{}.csv".format(i), index=False)
+    test_data.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i), index=False)
     print("test data saved")
 
 
@@ -245,7 +251,7 @@ def evaluate_distance_based_accuracy(features, classes):
 
 def compute_distances_on_train_set():
 
-    path_to_features = "/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv"
+    path_to_features = "/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_NN_{}.csv"
 
     dataset_scores = []
     for i in tqdm(range(1, 13)):
@@ -260,7 +266,7 @@ def compute_distances_on_train_set():
         dataset_scores.append(metrics_scores)
 
     result = pandas.DataFrame(dataset_scores, columns=constants.DISTANCE_METRICS)
-    result.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_scores.csv", index=False)
+    result.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_scores_NN.csv", index=False)
 
 
 if __name__ == "__main__":
