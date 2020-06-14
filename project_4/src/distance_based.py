@@ -5,7 +5,7 @@ import numpy, pandas, time
 from project_4.src import constants
 from tqdm import tqdm
 
-# from xgboost import XGBClassifier
+from xgboost import XGBClassifier
 from scipy.spatial.distance import pdist
 from sklearn.feature_selection import f_classif
 
@@ -172,38 +172,61 @@ def generate_train_and_test_datasets():
 
 def train_xgb(X_train, y_train, X_val, y_val):
 
-    pipeline = Pipeline([
+    # pipeline = Pipeline([
         # ('scaler', StandardScaler()),
         # ('selector', SelectPercentile(score_func=f_classif)),
-        ('classifier', XGBClassifier(random_state=constants.SEED))
-    ])
+        # ('classifier', XGBClassifier(random_state=constants.SEED, verbosity=2))
+    # ])
+
+    # param_grid = {
+        # 'selector__percentile': [90, 100],
+    #
+    #     'classifier__learning_rate': [0.05],
+    #     'classifier__n_estimators': [2000],
+    #     'classifier__max_depth': [6],
+    #     'classifier__min_child_weight': [3],
+    #     'classifier__gamma': [1],
+    #     'classifier__reg_alpha': [0.9],
+    #     'classifier__reg_lambda': [0.8],
+    #     'classifier__subsample': [1.],
+    #     'classifier__colsample_bytree': [0.3],
+    #     'classifier__objective': ['binary:logistic'],
+    #     'classifier__scale_pos_weight': [1],
+    #     'classifier__early_stopping_rounds': [10],
+    # }
+
+    model = XGBClassifier(random_state=constants.SEED, verbosity=2)
 
     param_grid = {
-        # 'selector__percentile': [90, 100],
 
-        'classifier__learning_rate': [0.01],
-        'classifier__n_estimators': [100],
-        'classifier__max_depth': [8],
-        'classifier__min_child_weight': [3],
-        'classifier__gamma': [1],
-        'classifier__reg_alpha': [1],
-        'classifier__reg_lambda': [1],
-        'classifier__subsample': [1.],
-        'classifier__colsample_bytree': [0.3],
-        'classifier__objective': ['binary:logistic'],
-        'classifier__scale_pos_weight': [1]
+        'learning_rate': [0.01],
+        'n_estimators': [10000],
+        'max_depth': [6],
+        'min_child_weight': [3],
+        'gamma': [1],
+        'reg_alpha': [0.9],
+        'reg_lambda': [0.8],
+        'subsample': [1.],
+        'colsample_bytree': [0.3],
+        'objective': ['binary:logistic'],
+        'scale_pos_weight': [1]
     }
 
+    # inception-v3:
     # default pars + 100% -> 0.63 accuracy
     # lr = 0.05, max_depth = 8, 500 estimators -> 0.653
     # lr = 0.1, max_depth = 8, 200 estimators, min_child_weight = 3, reg_alpha = 1 -> 0.66
     # lr = 0.01, colsample_bytree = 0.3, subsample = 1., 100 estimators -> 0.66
     # without scaler, lr = 0.005, 100 estimators -> 0.666 + MUCH FASTER
 
-    clf = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring='accuracy', cv=5, n_jobs=-1)
+    clf = GridSearchCV(estimator=model, param_grid=param_grid, scoring='accuracy', cv=5, n_jobs=-1)
+
+    fit_params = {"early_stopping_rounds": 100,
+                  "eval_set": [[X_val, y_val]]}
 
     start = time.time()
-    clf.fit(X_train, y_train)
+    print("training started...")
+    clf.fit(X_train, y_train, **fit_params)
     print("training took", round(time.time() - start) // 60 + 1, 'min')
 
     val_score = clf.score(X_val, y_val)
@@ -269,41 +292,79 @@ def compute_distances_on_train_set():
     result.to_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_scores_NN.csv", index=False)
 
 
+def predict_similarity_based_on_distance():
+
+    path_to_features = "/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv"
+
+    predictions = []
+
+    for i in tqdm(range(1, 7)):
+
+        print("test_data_{}".format(i), "is being processed\n")
+        test_features = pandas.read_csv(path_to_features.format(i))
+
+        features = numpy.array(test_features.iloc[:, 1:])
+
+        a_features = features[:, :(features.shape[1] // 3)]
+        b_features = features[:, (features.shape[1] // 3):(2 * features.shape[1] // 3)]
+        c_features = features[:, (2 * features.shape[1] // 3):]
+
+        for i in range(features.shape[0]):
+
+            a_to_b_distance = pdist([a_features[i].tolist(), b_features[i].tolist()], metric='correlation')
+            a_to_c_distance = pdist([a_features[i].tolist(), c_features[i].tolist()], metric='correlation')
+
+            if a_to_b_distance < a_to_c_distance:
+                predictions.append('1')
+            else:
+                predictions.append('0')
+
+    predictions = "\n".join(predictions)
+
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/distance_based_predictions_X.txt", 'w') as file:
+        file.write(predictions)
+
+    print("predictions saved")
+
+
 if __name__ == "__main__":
 
-    generate_train_and_test_datasets()
+    # generate_train_and_test_datasets()
     # DISTANCE BASED ACCURACY
     # compute_distances_on_train_set()
+    # predict_similarity_based_on_distance()
 
-    # train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_1.csv")
-    # train_features = train_chunk.sample(frac=0.3, replace=False)
-    #
-    # for i in range(2,13):
-    #     train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_{}.csv".format(i))
-    #     train_features = pandas.concat([train_features, train_chunk.sample(frac=0.3, replace=False)])
-    #
-    # features = train_features.iloc[:, 2:]
-    # classes = train_features['class']
-    #
-    # # split
-    # X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
-    #
-    # start = time.time()
-    #
-    # # get trained model
-    # best_model = train_xgb(X_train, y_train, X_val, y_val)
-    #
-    # # predict on all test chunks
-    # all_predictions = []
-    # for i in range(1,7):
-    #     test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_{}.csv".format(i))
-    #     chunk_predictions = best_model.predict(test_chunk.iloc[:, 1:])
-    #
-    #     print(chunk_predictions)
-    #
-    # predictions = "\n".join([str(prob) for prob in predictions])
-    # with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost.txt", 'w') as file:
-    #     file.write(predictions)
-    #
-    # print("xgb predictions saved")
+    train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_X_1.csv")
+    train_features = train_chunk.sample(frac=0.3, replace=False)
+
+    for i in range(2,13):
+        train_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/train_data_X_{}.csv".format(i))
+        train_features = pandas.concat([train_features, train_chunk.sample(frac=0.3, replace=False)])
+
+    print("training set composed")
+
+    features = train_features.iloc[:, 2:]
+    classes = train_features['class']
+
+    # split
+    X_train, X_val, y_train, y_val = train_test_split(features, classes, stratify=classes, random_state=constants.SEED)
+
+    start = time.time()
+
+    # get trained model
+    best_model = train_xgb(X_train, y_train, X_val, y_val)
+
+    # predict on all test chunks
+    predictions = []
+    for i in range(1,7):
+        test_chunk = pandas.read_csv("/Users/andreidm/ETH/courses/iml-tasks/project_4/data/test_data_X_{}.csv".format(i))
+        chunk_predictions = best_model.predict(test_chunk.iloc[:, 1:], ntree_limit=best_model.best_ntree_limit)
+
+        predictions.extend(chunk_predictions.tolist())
+
+    predictions = "\n".join([str(prob) for prob in predictions])
+    with open("/Users/andreidm/ETH/courses/iml-tasks/project_4/res/xgboost_predictions_X_3.txt", 'w') as file:
+        file.write(predictions)
+
+    print("xgb predictions saved")
 
